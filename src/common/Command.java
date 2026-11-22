@@ -5,10 +5,9 @@ import java.util.List;
 
 import com.google.gson.reflect.TypeToken;
 
-import common.dto_old.*;
-import dto.common.ChatRoomDTO;
-import dto.common.MessageDTO;
-import dto.common.UserDTO;
+import dto.common.*;
+import dto.request.*;
+import dto.response.*;
 
 /**
  * 서버와 클라이언트가 주고받는 모든 명령어(type).
