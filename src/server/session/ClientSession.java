@@ -1,5 +1,7 @@
 package server.session;
 
-public interface ClientSession {
+import common.Command;
 
+public interface ClientSession {
+	void send(Command type, Object data);
 }
