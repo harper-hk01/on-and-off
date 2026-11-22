@@ -26,7 +26,7 @@ public class RoomDAO {
      * ROOM_OPEN: 나와 친구가 둘 다 들어 있는 DAILY(1:1) 방 번호를 찾는다. 없으면 null.
      * room_members를 두 번(a, b) 조인해서 "나도 있고 친구도 있는 방"을 고른다.
      */
-    public Long findDirectRoomId(long meId, long friendId) throws SQLException {
+    public Long findDirectRoomId(long meId, long friendId) {
         String sql = "SELECT r.room_id "
                    + "FROM chat_rooms r "
                    + "JOIN room_members a ON a.room_id = r.room_id AND a.user_id = ? "
@@ -43,6 +43,8 @@ public class RoomDAO {
                 }
                 return null;
             }
+        } catch (SQLException e) {
+            throw new DAOException("DB 오류: RoomDAO.findDirectRoomId", e);
         }
     }
 
@@ -56,7 +58,7 @@ public class RoomDAO {
      * 방 만들기 + 참여자 여러 줄 넣기는 "전부 성공 아니면 전부 취소"여야 하므로 트랜잭션으로 묶는다.
      * 방 번호는 AUTO_INCREMENT라서 getGeneratedKeys()로 받는다.
      */
-    public long createRoom(RoomType type, String roomName, List<Long> memberIds) throws SQLException {
+    public long createRoom(RoomType type, String roomName, List<Long> memberIds) {
         String roomSql = "INSERT INTO chat_rooms (room_type, room_name) VALUES (?, ?)";
         String memberSql = "INSERT INTO room_members (room_id, user_id) VALUES (?, ?)";
 
@@ -96,13 +98,15 @@ public class RoomDAO {
             } finally {
                 conn.setAutoCommit(true);
             }
+        } catch (SQLException e) {
+            throw new DAOException("DB 오류: RoomDAO.createRoom", e);
         }
     }
 
     /**
      * ROOM_ENTER 등: 내가 그 방의 참여자인지 확인한다. 아니면 RoomService가 ERROR(권한 없음)로 보낸다.
      */
-    public boolean isMember(long roomId, long userId) throws SQLException {
+    public boolean isMember(long roomId, long userId) {
         String sql = "SELECT COUNT(*) FROM room_members WHERE room_id = ? AND user_id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -112,6 +116,8 @@ public class RoomDAO {
                 rs.next();
                 return rs.getInt(1) > 0;
             }
+        } catch (SQLException e) {
+            throw new DAOException("DB 오류: RoomDAO.isMember", e);
         }
     }
 
@@ -122,7 +128,7 @@ public class RoomDAO {
      * 채우지 않는 것: pinnedMessage(null) → RoomService가 findPinnedMessageId + MessageDAO.findById로 채움
      *               hasNew(false)        → 방 하나만 볼 때는 쓰지 않음
      */
-    public ChatRoomDTO findRoom(long roomId) throws SQLException {
+    public ChatRoomDTO findRoom(long roomId) {
         String sql = "SELECT room_id, room_type, room_name FROM chat_rooms WHERE room_id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -140,13 +146,15 @@ public class RoomDAO {
                         null,       // pinnedMessage: RoomService가 채움
                         false);     // hasNew
             }
+        } catch (SQLException e) {
+            throw new DAOException("DB 오류: RoomDAO.findRoom", e);
         }
     }
 
     /**
      * 그 방의 공지 메시지 번호를 꺼낸다. 공지가 없거나 방이 없으면 null.
      */
-    public Long findPinnedMessageId(long roomId) throws SQLException {
+    public Long findPinnedMessageId(long roomId) {
         String sql = "SELECT pinned_message_id FROM chat_rooms WHERE room_id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -159,15 +167,19 @@ public class RoomDAO {
                 }
                 return null;
             }
+        } catch (SQLException e) {
+            throw new DAOException("DB 오류: RoomDAO.findPinnedMessageId", e);
         }
     }
 
     /**
      * 방 참여자 목록을 UserDTO로 꺼낸다 (나 포함).
      */
-    public List<UserDTO> findMembers(long roomId) throws SQLException {
+    public List<UserDTO> findMembers(long roomId) {
         try (Connection conn = DBConnection.getConnection()) {
             return findMembers(conn, roomId);
+        } catch (SQLException e) {
+            throw new DAOException("DB 오류: RoomDAO.findMembers", e);
         }
     }
 
@@ -175,7 +187,7 @@ public class RoomDAO {
      * CHAT_RECV·TYPING_NOTI 등을 방 사람들에게 보낼 때: 참여자의 로그인 아이디만 꺼낸다.
      * SessionRegistry.sendToAll(loginIds, ...)에 그대로 넘기면 된다.
      */
-    public List<String> findMemberLoginIds(long roomId) throws SQLException {
+    public List<String> findMemberLoginIds(long roomId) {
         String sql = "SELECT u.login_id "
                    + "FROM room_members rm "
                    + "JOIN users u ON u.user_id = rm.user_id "
@@ -189,6 +201,8 @@ public class RoomDAO {
                     list.add(rs.getString("login_id"));
                 }
             }
+        } catch (SQLException e) {
+            throw new DAOException("DB 오류: RoomDAO.findMemberLoginIds", e);
         }
         return list;
     }
@@ -204,7 +218,7 @@ public class RoomDAO {
      * 1:1 방은 이름이 없어서 화면에 상대 이름을 보여 줘야 하므로 members도 채운다.
      * pinnedMessage는 null (방에 들어갈 때 ROOM_INFO로 보냄).
      */
-    public List<ChatRoomDTO> findMyRooms(long userId) throws SQLException {
+    public List<ChatRoomDTO> findMyRooms(long userId) {
         String sql = "SELECT r.room_id, r.room_type, r.room_name, "
                    + "       EXISTS ( "
                    + "         SELECT 1 FROM messages m "
@@ -232,6 +246,8 @@ public class RoomDAO {
                             rs.getBoolean("has_new")));
                 }
             }
+        } catch (SQLException e) {
+            throw new DAOException("DB 오류: RoomDAO.findMyRooms", e);
         }
         return list;
     }
@@ -241,7 +257,7 @@ public class RoomDAO {
      * 더 작은 번호가 늦게 도착해도 뒤로 가지 않도록 "지금보다 클 때만" 바꾼다.
      * 돌려주는 값 = 바뀐 줄 수 (0이면 이미 더 뒤까지 읽었거나 참여자가 아님).
      */
-    public int updateLastRead(long roomId, long userId, long lastReadMessageId) throws SQLException {
+    public int updateLastRead(long roomId, long userId, long lastReadMessageId) {
         String sql = "UPDATE room_members "
                    + "SET last_read_message_id = ? "
                    + "WHERE room_id = ? AND user_id = ? "
@@ -253,6 +269,8 @@ public class RoomDAO {
             ps.setLong(3, userId);
             ps.setLong(4, lastReadMessageId);
             return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new DAOException("DB 오류: RoomDAO.updateLastRead", e);
         }
     }
 
@@ -261,7 +279,7 @@ public class RoomDAO {
      * 그 메시지가 이 방 것인지는 RoomService가 MessageDAO.existsInRoom()으로 먼저 확인한다.
      * 돌려주는 값 = 바뀐 줄 수.
      */
-    public int updatePinnedMessage(long roomId, Long messageId) throws SQLException {
+    public int updatePinnedMessage(long roomId, Long messageId) {
         String sql = "UPDATE chat_rooms SET pinned_message_id = ? WHERE room_id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -272,6 +290,8 @@ public class RoomDAO {
             }
             ps.setLong(2, roomId);
             return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new DAOException("DB 오류: RoomDAO.updatePinnedMessage", e);
         }
     }
 
