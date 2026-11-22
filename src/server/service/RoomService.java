@@ -1,7 +1,7 @@
 package server.service;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -11,6 +11,7 @@ import common.Protocol;
 import dto.common.ChatRoomDTO;
 import dto.common.MessageDTO;
 import dto.common.RoomType;
+import dto.common.UserDTO;
 import dto.request.NoticeSetRequest;
 import dto.request.RoomCreateRequest;
 import dto.request.RoomEnterRequest;
@@ -19,16 +20,14 @@ import dto.request.RoomReadRequest;
 import dto.response.NoticeNoti;
 import dto.response.RoomCreateResult;
 import dto.response.RoomInfo;
+import server.dao.FriendDAO;
 import server.dao.MessageDAO;
 import server.dao.RoomDAO;
 import server.dao.UserDAO;
-import server.dao.FriendDAO;
 import server.session.SessionRegistry;
 
-// 현재 프로젝트 구조에 ServiceException 클래스가 없는데 제외하신 걸까요??
-// CommandDispatcher 클래스 문서 봤더니 사용하시는 것 같아 일단 활용해서 적어뒀습니다. 제외하기로 했다면 수정하겠습니다!
+// 초기 설계와 달라진 부분 : 1:1방 생성 시 친구 여부 검사하기 위해서 필드, 생성자에 FriendDAO 추가
 
-//설계와 달라진 부분 : 1:1 방 생성 시 친구 여부 검사가 필요할 것 같아서 FriendDAO 필드, 생성자에 추가했습니다.
 
 public class RoomService {
 
@@ -49,18 +48,16 @@ public class RoomService {
 		this.friendDAO = friendDAO;
 	}
 
-	// 친구와의 1:1 채팅방 열기(ROOM_OPEN)
-	public RoomInfo openRoom(long me, RoomOpenRequest req) {
+	// 친구와의 1:1 채팅방 열기 (ROOM_OPEN)
+	public RoomInfo openRoom(long me, RoomOpenRequest req) throws SQLException {
 		Long friendId = userDAO.findUserId(req.getLoginId());
 
 		if (friendId == null) {
 			throw new ServiceException("사용자를 찾을 수 없습니다.");
 		}
-
 		if (friendId == me) {
 			throw new ServiceException("자기 자신과는 1:1 방을 열 수 없습니다.");
 		}
-
 		if (!friendDAO.isFriend(me, friendId)) {
 			throw new ServiceException("친구와만 1:1 채팅방을 열 수 있습니다.");
 		}
@@ -69,13 +66,13 @@ public class RoomService {
 		return buildRoomInfo(me, roomId);
 	}
 
-	// 기존 채팅방 입장(ROOM_ENTER)
-	public RoomInfo enterRoom(long me, RoomEnterRequest req) {
+	// 기존 채팅방 입장 (ROOM_ENTER)
+	public RoomInfo enterRoom(long me, RoomEnterRequest req) throws SQLException {
 		return buildRoomInfo(me, req.getRoomId());
 	}
 
-	// 그룹 채팅방 생성(ROOM_CREATE)
-	public RoomCreateResult createRoom(long me, RoomCreateRequest req) {
+	// 그룹 채팅방 생성 (ROOM_CREATE)
+	public RoomCreateResult createRoom(long me, RoomCreateRequest req) throws SQLException {
 		String roomName = req.getRoomName();
 
 		if (roomName == null || roomName.isBlank()) {
@@ -99,7 +96,7 @@ public class RoomService {
 					return new RoomCreateResult(false, "초대할 사용자를 찾을 수 없습니다.", null);
 				}
 
-				// 본인이나 이미 추가한 사용자에게 초대를 중복 전송하지 않는다.
+				// 새 참여자만 추가해 본인과 중복 선택한 사용자에게 알림이 가지 않도록 한다.
 				if (memberIds.add(userId)) {
 					invitedLoginIds.add(loginId);
 				}
@@ -111,49 +108,38 @@ public class RoomService {
 		}
 
 		long roomId = roomDAO.createRoom(RoomType.WORK, roomName, new ArrayList<>(memberIds));
-		ChatRoomDTO room = roomDAO.findRoom(roomId);
-		room.setMembers(roomDAO.findMembers(roomId));
+		ChatRoomDTO room = getRoomOrThrow(roomId);
 
 		registry.sendToAll(invitedLoginIds, Command.ROOM_INVITED, room);
 		return new RoomCreateResult(true, "채팅방을 생성했습니다.", room);
 	}
 
-	// 내가 참여 중인 채팅방 목록 조회(ROOM_LIST)
-	public List<ChatRoomDTO> getRoomList(long me) {
-		List<ChatRoomDTO> rooms = roomDAO.findMyRooms(me);
-
-		for (ChatRoomDTO room : rooms) {
-			room.setMembers(roomDAO.findMembers(room.getRoomId()));
-			room.setPinnedMessage(null);
-		}
-
-		return rooms;
+	// 내가 참여 중인 채팅방 목록 조회 (ROOM_LIST)
+	public List<ChatRoomDTO> getRoomList(long me) throws SQLException {
+		return roomDAO.findMyRooms(me);
 	}
 
-	// 채팅방에서 마지막으로 읽은 메시지 갱신(ROOM_READ)
-	public void markRead(long me, RoomReadRequest req) {
+	// 마지막으로 읽은 메시지 갱신 (ROOM_READ)
+	public void markRead(long me, RoomReadRequest req) throws SQLException {
 		long roomId = req.getRoomId();
 		long messageId = req.getLastReadMessageId();
 
-		if (!roomDAO.isMember(roomId, me)) {
-			throw new ServiceException("채팅방에 접근할 권한이 없습니다.");
-		}
+		requireMember(roomId, me);
+
 		if (!messageDAO.existsInRoom(messageId, roomId)) {
 			throw new ServiceException("이 채팅방의 메시지를 찾을 수 없습니다.");
 		}
-		// updateLastRead에서 저장된 위치보다 최신일 때만 갱신하는지 확인 필요!!
+
+		// DAO의 UPDATE 조건이 기존 읽음 위치보다 큰 번호만 저장한다.
 		roomDAO.updateLastRead(roomId, me, messageId);
 	}
 
-	// 업무 채팅방 공지 설정 또는 해제(NOTICE_SET)
-	public void setNotice(long me, NoticeSetRequest req) {
+	// 업무 채팅방 공지 설정 또는 해제 (NOTICE_SET)
+	public void setNotice(long me, NoticeSetRequest req) throws SQLException {
 		long roomId = req.getRoomId();
+		requireMember(roomId, me);
 
-		if (!roomDAO.isMember(roomId, me)) {
-			throw new ServiceException("채팅방에 접근할 권한이 없습니다.");
-		}
-
-		ChatRoomDTO room = roomDAO.findRoom(roomId);
+		ChatRoomDTO room = getRoomOrThrow(roomId);
 		if (room.getRoomType() != RoomType.WORK) {
 			throw new ServiceException("공지는 업무방에서만 설정할 수 있습니다.");
 		}
@@ -161,11 +147,16 @@ public class RoomService {
 		Long messageId = req.getMessageId();
 		MessageDTO pinnedMessage = null;
 
+		// messageId가 null이면 공지를 해제한다.
 		if (messageId != null) {
 			if (!messageDAO.existsInRoom(messageId, roomId)) {
 				throw new ServiceException("이 채팅방의 메시지를 찾을 수 없습니다.");
 			}
+
 			pinnedMessage = messageDAO.findById(messageId);
+			if (pinnedMessage == null) {
+				throw new ServiceException("공지로 설정할 메시지를 찾을 수 없습니다.");
+			}
 		}
 
 		roomDAO.updatePinnedMessage(roomId, messageId);
@@ -175,14 +166,13 @@ public class RoomService {
 		registry.sendToAll(memberLoginIds, Command.NOTICE_NOTI, notice);
 	}
 
-	// 두 사용자의 1:1 채팅방 ID 조회 또는 생성
-	private long getOrCreateDirectRoom(long me, long friendId) {
+	// 기존 1:1 방이 있으면 재사용하고, 새로 만들었을 때만 상대에게 알린다.
+	private long getOrCreateDirectRoom(long me, long friendId) throws SQLException {
 		long newRoomId;
 
-		// 두 사용자가 동시에 열어도 같은 1:1 방을 사용하도록 조회와 생성을 묶는다.
+		// 같은 RoomService를 공유하는 두 요청이 동시에 방을 만들지 않도록 한다.
 		synchronized (this) {
 			Long existingRoomId = roomDAO.findDirectRoomId(me, friendId);
-
 			if (existingRoomId != null) {
 				return existingRoomId;
 			}
@@ -190,36 +180,45 @@ public class RoomService {
 			newRoomId = roomDAO.createRoom(RoomType.DAILY, null, List.of(me, friendId));
 		}
 
-		// 새로 만든 경우에만 상대에게 방 정보를 보낸다.
-		ChatRoomDTO room = roomDAO.findRoom(newRoomId);
-		room.setMembers(roomDAO.findMembers(newRoomId));
+		ChatRoomDTO room = getRoomOrThrow(newRoomId);
+		UserDTO friend = userDAO.findById(friendId);
+		if (friend == null) {
+			throw new ServiceException("사용자를 찾을 수 없습니다.");
+		}
 
-		String friendLoginId = userDAO.findById(friendId).getLoginId();
-		registry.sendTo(friendLoginId, Command.ROOM_INVITED, room);
-
+		registry.sendTo(friend.getLoginId(), Command.ROOM_INVITED, room);
 		return newRoomId;
 	}
 
-	// 방 정보, 회의 여부, 최근 메시지를 합쳐 입장 응답 구성
-	private RoomInfo buildRoomInfo(long me, long roomId) {
-		if (!roomDAO.isMember(roomId, me)) {
-			throw new ServiceException("채팅방에 접근할 권한이 없습니다.");
-		}
+	// 방 정보, 공지, 회의 여부, 최근 메시지를 합쳐 입장 응답을 만든다.
+	private RoomInfo buildRoomInfo(long me, long roomId) throws SQLException {
+		requireMember(roomId, me);
 
-		ChatRoomDTO room = roomDAO.findRoom(roomId);
-		room.setMembers(roomDAO.findMembers(roomId));
-
+		ChatRoomDTO room = getRoomOrThrow(roomId);
 		Long pinnedMessageId = roomDAO.findPinnedMessageId(roomId);
-
 		if (pinnedMessageId != null) {
 			room.setPinnedMessage(messageDAO.findById(pinnedMessageId));
 		}
 
-		List<MessageDTO> messages = new ArrayList<>(messageDAO.findRecent(roomId, Protocol.HISTORY_LIMIT));
-		Collections.reverse(messages);
-
+		// findRecent()는 최근 메시지를 오래된 것부터 정렬해 반환한다.
+		List<MessageDTO> messages = messageDAO.findRecent(roomId, Protocol.HISTORY_LIMIT);
 		boolean meeting = room.getRoomType() == RoomType.WORK && meetingService.isMeeting(roomId);
 
 		return new RoomInfo(room, meeting, messages);
+	}
+
+	private void requireMember(long roomId, long userId) throws SQLException {
+		if (!roomDAO.isMember(roomId, userId)) {
+			throw new ServiceException("채팅방에 접근할 권한이 없습니다.");
+		}
+	}
+
+	// findRoom()은 참여자 목록까지 채워서 반환하고, 방이 없으면 null을 반환한다.
+	private ChatRoomDTO getRoomOrThrow(long roomId) throws SQLException {
+		ChatRoomDTO room = roomDAO.findRoom(roomId);
+		if (room == null) {
+			throw new ServiceException("채팅방을 찾을 수 없습니다.");
+		}
+		return room;
 	}
 }
