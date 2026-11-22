@@ -1,6 +1,5 @@
 package server.service;
 
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +59,7 @@ public class MeetingService {
 	}
 
 	// 업무방 회의 시작 (MEETING_START)
-	public void startMeeting(long me, MeetingStartRequest req) throws SQLException {
+	public void startMeeting(long me, MeetingStartRequest req)  {
 		long roomId = req.getRoomId();
 		requireWorkRoomMember(roomId, me);
 
@@ -88,7 +87,7 @@ public class MeetingService {
 	}
 
 	// 업무방 회의 종료 (MEETING_END)
-	public void endMeeting(long me, MeetingEndRequest req) throws SQLException {
+	public void endMeeting(long me, MeetingEndRequest req)  {
 		long roomId = req.getRoomId();
 		requireWorkRoomMember(roomId, me);
 
@@ -114,7 +113,7 @@ public class MeetingService {
 	}
 
 	// ChatService가 메시지를 DB에 저장한 뒤 호출한다.
-	public void recordSpeech(long roomId, long userId) throws SQLException {
+	public void recordSpeech(long roomId, long userId)  {
 		Map<String, Long> spoken = lastSpokenAt.get(roomId);
 		if (spoken == null) {
 			return;
@@ -175,7 +174,7 @@ public class MeetingService {
 		}
 	}
 
-	private void requireWorkRoomMember(long roomId, long userId) throws SQLException {
+	private void requireWorkRoomMember(long roomId, long userId)  {
 		if (!roomDAO.isMember(roomId, userId)) {
 			throw new ServiceException("채팅방에 접근할 권한이 없습니다.");
 		}
@@ -186,7 +185,7 @@ public class MeetingService {
 		}
 	}
 
-	private String getLoginId(long userId) throws SQLException {
+	private String getLoginId(long userId)  {
 		UserDTO user = userDAO.findById(userId);
 		if (user == null) {
 			throw new ServiceException("사용자를 찾을 수 없습니다.");
