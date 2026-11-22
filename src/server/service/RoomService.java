@@ -1,6 +1,5 @@
 package server.service;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -49,7 +48,7 @@ public class RoomService {
 	}
 
 	// 친구와의 1:1 채팅방 열기 (ROOM_OPEN)
-	public RoomInfo openRoom(long me, RoomOpenRequest req) throws SQLException {
+	public RoomInfo openRoom(long me, RoomOpenRequest req){
 		Long friendId = userDAO.findUserId(req.getLoginId());
 
 		if (friendId == null) {
@@ -67,12 +66,12 @@ public class RoomService {
 	}
 
 	// 기존 채팅방 입장 (ROOM_ENTER)
-	public RoomInfo enterRoom(long me, RoomEnterRequest req) throws SQLException {
+	public RoomInfo enterRoom(long me, RoomEnterRequest req) {
 		return buildRoomInfo(me, req.getRoomId());
 	}
 
 	// 그룹 채팅방 생성 (ROOM_CREATE)
-	public RoomCreateResult createRoom(long me, RoomCreateRequest req) throws SQLException {
+	public RoomCreateResult createRoom(long me, RoomCreateRequest req) {
 		String roomName = req.getRoomName();
 
 		if (roomName == null || roomName.isBlank()) {
@@ -115,12 +114,12 @@ public class RoomService {
 	}
 
 	// 내가 참여 중인 채팅방 목록 조회 (ROOM_LIST)
-	public List<ChatRoomDTO> getRoomList(long me) throws SQLException {
+	public List<ChatRoomDTO> getRoomList(long me) {
 		return roomDAO.findMyRooms(me);
 	}
 
 	// 마지막으로 읽은 메시지 갱신 (ROOM_READ)
-	public void markRead(long me, RoomReadRequest req) throws SQLException {
+	public void markRead(long me, RoomReadRequest req)  {
 		long roomId = req.getRoomId();
 		long messageId = req.getLastReadMessageId();
 
@@ -135,7 +134,7 @@ public class RoomService {
 	}
 
 	// 업무 채팅방 공지 설정 또는 해제 (NOTICE_SET)
-	public void setNotice(long me, NoticeSetRequest req) throws SQLException {
+	public void setNotice(long me, NoticeSetRequest req)   {
 		long roomId = req.getRoomId();
 		requireMember(roomId, me);
 
@@ -167,7 +166,7 @@ public class RoomService {
 	}
 
 	// 기존 1:1 방이 있으면 재사용하고, 새로 만들었을 때만 상대에게 알린다.
-	private long getOrCreateDirectRoom(long me, long friendId) throws SQLException {
+	private long getOrCreateDirectRoom(long me, long friendId)   {
 		long newRoomId;
 
 		// 같은 RoomService를 공유하는 두 요청이 동시에 방을 만들지 않도록 한다.
@@ -191,7 +190,7 @@ public class RoomService {
 	}
 
 	// 방 정보, 공지, 회의 여부, 최근 메시지를 합쳐 입장 응답을 만든다.
-	private RoomInfo buildRoomInfo(long me, long roomId) throws SQLException {
+	private RoomInfo buildRoomInfo(long me, long roomId)   {
 		requireMember(roomId, me);
 
 		ChatRoomDTO room = getRoomOrThrow(roomId);
@@ -207,14 +206,14 @@ public class RoomService {
 		return new RoomInfo(room, meeting, messages);
 	}
 
-	private void requireMember(long roomId, long userId) throws SQLException {
+	private void requireMember(long roomId, long userId)   {
 		if (!roomDAO.isMember(roomId, userId)) {
 			throw new ServiceException("채팅방에 접근할 권한이 없습니다.");
 		}
 	}
 
 	// findRoom()은 참여자 목록까지 채워서 반환하고, 방이 없으면 null을 반환한다.
-	private ChatRoomDTO getRoomOrThrow(long roomId) throws SQLException {
+	private ChatRoomDTO getRoomOrThrow(long roomId)   {
 		ChatRoomDTO room = roomDAO.findRoom(roomId);
 		if (room == null) {
 			throw new ServiceException("채팅방을 찾을 수 없습니다.");
