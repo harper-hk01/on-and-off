@@ -69,7 +69,7 @@ public enum Command {
     NUDGE_NOTI(NudgeNoti.class),                    // S→C
 
     // ===== 4.8 공통 =====
-    ERROR(ErrorDTO.class);                          // S→C
+    ERROR(ErrorDTO.class);                          // S→C Command.ERROR.dataType = ErrorDTO.class; // 개념상 이렇다는 뜻
 
     // ---------------------------------------------
 
