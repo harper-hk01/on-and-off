@@ -38,7 +38,7 @@ public class MessageDAO {
      * 실행 후 getGeneratedKeys()로 꺼낸다.
      * sent_at은 DB 기본값(지금 시각)이 자동으로 들어간다.
      */
-    public long insert(long roomId, long senderId, String content) throws SQLException {
+    public long insert(long roomId, long senderId, String content) {
         String sql = "INSERT INTO messages (room_id, sender_id, content) VALUES (?, ?, ?)";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -52,6 +52,8 @@ public class MessageDAO {
                 }
                 throw new SQLException("메시지 번호를 받지 못했습니다.");
             }
+        } catch (SQLException e) {
+            throw new DAOException("DB 오류: MessageDAO.insert", e);
         }
     }
 
@@ -60,7 +62,7 @@ public class MessageDAO {
      * CHAT 저장 직후 CHAT_RECV로 보낼 MessageDTO를 만들 때,
      * 공지(pinnedMessage)를 꺼낼 때 쓴다.
      */
-    public MessageDTO findById(long messageId) throws SQLException {
+    public MessageDTO findById(long messageId) {
         String sql = SELECT_MESSAGE + "WHERE m.message_id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -71,6 +73,8 @@ public class MessageDAO {
                 }
                 return null;
             }
+        } catch (SQLException e) {
+            throw new DAOException("DB 오류: MessageDAO.findById", e);
         }
     }
 
@@ -80,7 +84,7 @@ public class MessageDAO {
      * "최근 50개"를 고르려고 번호 내림차순(DESC)으로 꺼낸 뒤,
      * 화면에는 오래된 것부터 보여야 하므로 Collections.reverse()로 뒤집어서 돌려준다.
      */
-    public List<MessageDTO> findRecent(long roomId, int limit) throws SQLException {
+    public List<MessageDTO> findRecent(long roomId, int limit) {
         String sql = SELECT_MESSAGE
                    + "WHERE m.room_id = ? "
                    + "ORDER BY m.message_id DESC "
@@ -95,8 +99,10 @@ public class MessageDAO {
                     list.add(toMessageDTO(rs));
                 }
             }
+        } catch (SQLException e) {
+            throw new DAOException("DB 오류: MessageDAO.findRecent", e);
         }
-        Collections.reverse(list);                     // 최신순 → 오래된 순
+        Collections.reverse(list); // 최신순 → 오래된 순
         return list;
     }
 
@@ -104,7 +110,7 @@ public class MessageDAO {
      * NOTICE_SET 전에: 그 메시지가 정말 그 방의 메시지인지 확인한다.
      * 다른 방 메시지를 공지로 고정하지 못하게 막는 용도.
      */
-    public boolean existsInRoom(long messageId, long roomId) throws SQLException {
+    public boolean existsInRoom(long messageId, long roomId) {
         String sql = "SELECT COUNT(*) FROM messages WHERE message_id = ? AND room_id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -114,6 +120,8 @@ public class MessageDAO {
                 rs.next();
                 return rs.getInt(1) > 0;
             }
+        } catch (SQLException e) {
+            throw new DAOException("DB 오류: MessageDAO.existsInRoom", e);
         }
     }
 

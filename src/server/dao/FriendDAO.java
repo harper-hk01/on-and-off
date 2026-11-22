@@ -22,7 +22,7 @@ public class FriendDAO {
     /**
      * FRIEND_ADD 전에: 이미 친구인지 확인한다. 이미 친구면 true.
      */
-    public boolean isFriend(long meId, long friendId) throws SQLException {
+    public boolean isFriend(long meId, long friendId) {
         String sql = "SELECT COUNT(*) FROM friends WHERE user_id = ? AND friend_id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -32,6 +32,8 @@ public class FriendDAO {
                 rs.next();
                 return rs.getInt(1) > 0;
             }
+        } catch (SQLException e) {
+            throw new DAOException("DB 오류: FriendDAO.isFriend", e);
         }
     }
 
@@ -42,7 +44,7 @@ public class FriendDAO {
      * 그래서 setAutoCommit(false)로 자동 저장을 끄고, 둘 다 성공하면 commit(),
      * 중간에 오류가 나면 rollback()으로 둘 다 취소한다.
      */
-    public void insertBoth(long meId, long friendId) throws SQLException {
+    public void insertBoth(long meId, long friendId) {
         String sql = "INSERT INTO friends (user_id, friend_id) VALUES (?, ?)";
         try (Connection conn = DBConnection.getConnection()) {
             conn.setAutoCommit(false); //자동 저장 끄기
@@ -60,10 +62,12 @@ public class FriendDAO {
                 conn.commit(); // 둘 다 성공 → 저장
             } catch (SQLException e) {
                 conn.rollback();// 하나라도 실패 → 둘 다 취소
-                throw e; //    오류는 FriendService로 넘긴다
+                throw e; //    바깥 catch에서 DAOException으로 감싸서 던진다
             } finally {
                 conn.setAutoCommit(true);// 원래대로 돌려 두기
             }
+        } catch (SQLException e) {
+            throw new DAOException("DB 오류: FriendDAO.insertBoth", e);
         }
     }
 
@@ -72,7 +76,7 @@ public class FriendDAO {
      * 접속 중(ONLINE·AWAY)인 친구가 위로, 같은 그룹 안에서는 닉네임 순.
      * (u.status = 'OFFLINE')은 오프라인이면 1, 아니면 0이라서 오름차순이면 접속 중이 먼저 나온다.
      */
-    public List<UserDTO> findFriends(long meId) throws SQLException {
+    public List<UserDTO> findFriends(long meId) {
         String sql = "SELECT u.login_id, u.nickname, u.status_message, u.status "
                    + "FROM friends f "
                    + "JOIN users u ON u.user_id = f.friend_id "
@@ -91,6 +95,8 @@ public class FriendDAO {
                             Status.valueOf(rs.getString("status"))));
                 }
             }
+        } catch (SQLException e) {
+            throw new DAOException("DB 오류: FriendDAO.findFriends", e);
         }
         return list; // 친구가 없으면 빈 목록 (null 아님)
     }
@@ -99,7 +105,7 @@ public class FriendDAO {
      * STATUS_NOTI·PROFILE_NOTI 보낼 때: 내 친구들의 로그인 아이디만 꺼낸다.
      * SessionRegistry.sendToAll(loginIds, ...)에 그대로 넘기면 된다.
      */
-    public List<String> findFriendLoginIds(long meId) throws SQLException {
+    public List<String> findFriendLoginIds(long meId) {
         String sql = "SELECT u.login_id "
                    + "FROM friends f "
                    + "JOIN users u ON u.user_id = f.friend_id "
@@ -113,6 +119,8 @@ public class FriendDAO {
                     list.add(rs.getString("login_id"));
                 }
             }
+        } catch (SQLException e) {
+            throw new DAOException("DB 오류: FriendDAO.findFriendLoginIds", e);
         }
         return list;
     }
