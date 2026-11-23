@@ -9,8 +9,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import common.Command;
 import dto.common.ChatRoomDTO;
@@ -29,7 +27,6 @@ public class MeetingService {
 
 	private static final long NUDGE_AFTER_MS = TimeUnit.MINUTES.toMillis(10);
 	private static final long CHECK_INTERVAL_MS = TimeUnit.MINUTES.toMillis(1);
-	private static final Logger LOGGER = Logger.getLogger(MeetingService.class.getName());
 
 	private final RoomDAO roomDAO;
 	private final UserDAO userDAO;
@@ -50,7 +47,6 @@ public class MeetingService {
 		}
 	});
 
-	private ScheduledFuture<?> silenceTask;
 
 	public MeetingService(RoomDAO roomDAO, UserDAO userDAO, SessionRegistry registry) {
 		this.roomDAO = roomDAO;
@@ -130,18 +126,15 @@ public class MeetingService {
 	}
 
 	// ChatServer에서 서버 시작 시 한 번 호출한다.
-	public synchronized void startScheduler() {
-		if (silenceTask != null && !silenceTask.isDone()) {
-			return;
-		}
-
-		silenceTask = scheduler.scheduleWithFixedDelay(new Runnable() {
-			@Override
-			public void run() {
-				checkSilence();
-			}
-		}, CHECK_INTERVAL_MS, CHECK_INTERVAL_MS, TimeUnit.MILLISECONDS);
-	}
+	//불필요한 중복검사와 필드 제거
+	public void startScheduler() {
+    scheduler.scheduleWithFixedDelay(new Runnable() {
+        @Override
+        public void run() {
+            checkSilence();
+        }
+    }, CHECK_INTERVAL_MS, CHECK_INTERVAL_MS, TimeUnit.MILLISECONDS);
+}
 
 	// 마지막 발언 또는 독려 후 10분이 지난 접속자에게 독려 알림을 보낸다.
 	private synchronized void checkSilence() {
@@ -167,8 +160,10 @@ public class MeetingService {
 						nudged.put(loginId, now);
 					}
 				} catch (RuntimeException e) {
-					// 한 명에게 전송하다 실패해도 다음 참여자와 다음 주기의 검사는 계속한다.
-					LOGGER.log(Level.WARNING, "회의 독려 전송 실패 (roomId=" + roomId + ")", e);
+					//로그 방식에서 콘솔에만 남기는 방식으로 변경(설계와 필드 불일치를 고려하지 못함)
+					//Dispatcher가 응답하는 오류가 아니므로 try-catch 방식 사용
+   	 				System.err.println("회의 독려 전송 실패 (roomId=" + roomId
+           				 + ", loginId=" + loginId + "): " + e.getMessage());
 				}
 			}
 		}
