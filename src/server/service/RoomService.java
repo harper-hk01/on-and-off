@@ -75,12 +75,12 @@ public class RoomService {
 		String roomName = req.getRoomName();
 
 		if (roomName == null || roomName.isBlank()) {
-			return new RoomCreateResult(false, "채팅방 이름을 입력해 주세요.", null);
+			throw new ServiceException("채팅방 이름을 입력해 주세요.");
 		}
 
 		roomName = roomName.strip();
 		if (roomName.length() > Protocol.MAX_ROOM_NAME) {
-			return new RoomCreateResult(false, "채팅방 이름이 너무 깁니다.", null);
+			throw new ServiceException("채팅방 이름이 너무 깁니다.");
 		}
 
 		Set<Long> memberIds = new LinkedHashSet<>();
@@ -92,7 +92,7 @@ public class RoomService {
 				Long userId = userDAO.findUserId(loginId);
 
 				if (userId == null) {
-					return new RoomCreateResult(false, "초대할 사용자를 찾을 수 없습니다.", null);
+					throw new ServiceException("초대할 사용자를 찾을 수 없습니다.");
 				}
 
 				// 새 참여자만 추가해 본인과 중복 선택한 사용자에게 알림이 가지 않도록 한다.
@@ -103,7 +103,7 @@ public class RoomService {
 		}
 
 		if (invitedLoginIds.isEmpty()) {
-			return new RoomCreateResult(false, "초대할 사람을 선택해 주세요.", null);
+			throw new ServiceException("초대할 사람을 선택해 주세요.");
 		}
 
 		long roomId = roomDAO.createRoom(RoomType.WORK, roomName, new ArrayList<>(memberIds));
