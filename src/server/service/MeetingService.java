@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
@@ -38,6 +37,8 @@ public class MeetingService {
 	// 방 번호 → 참여자 로그인 아이디 → 마지막 독려 시각
 	private final ConcurrentHashMap<Long, Map<String, Long>> lastNudgedAt = new ConcurrentHashMap<>();
 
+	//스레드 팩토리(팩토리 패턴) 사용하여 단일 스레드 생성, 스레드의 이름/데몬 여부 설정 위해 사용함
+	//보조 기능 스레드이므로 데몬 스레드로 작성하기 위해 newThread 재정의 (독려 스레드가 JVM 종료를 막지 않도록 하기 위함)
 	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
 		@Override
 		public Thread newThread(Runnable task) {
