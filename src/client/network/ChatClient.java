@@ -8,7 +8,7 @@ import client.controller.ChatController;
 import client.controller.CommandHandler;
 import client.model.ChatModel;
 import common.Protocol;
-import client.view.MainView; //아직 없음
+//import client.view.MainView; //아직 없음
 
 public class ChatClient {
 
@@ -27,11 +27,10 @@ public class ChatClient {
 				// 2. controller에 view 연결
 				controller.setMainView(mainView);
 
-				// 3. 서버 수신 리스너 등록: connection.setListener(controller)
-				connection.setListener(controller);
+				// 서버 수신 리스너 등록: connection.setListener(controller) 삭제 - controller에서 대
 				
 				try {
-					// 4. 서버 접속 (connect(HOST, PORT))
+					// 3. 서버 접속 (connect(HOST, PORT))
 					connection.connect(Protocol.HOST, Protocol.PORT);
 				} catch (IOException e) {
 					// 실패하면 어떤 방법으로 안내하고 프로그램 종료할 건지 정하기
@@ -39,7 +38,7 @@ public class ChatClient {
 					System.exit(1);
 				}
 				
-				// 5. 첫 화면 띄우기 (showLogin)
+				// 4. 첫 화면 띄우기 (showLogin)
 				mainView.showLogin();
 			}
 		});
