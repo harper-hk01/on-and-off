@@ -20,7 +20,7 @@ import server.session.SessionRegistry;
 /**
  * 채팅 관련 기능을 담당하는 클래스.
  *
- * - 일반 채팅 메시지 전송
+ * - 채팅 메시지 전송
  * - 입력 중 상태 알림
  * - 버즈 알림
  */
@@ -50,7 +50,7 @@ public class ChatService {
     }
 
     /**
-     * CHAT: 일반 채팅 메시지 전송
+     * CHAT: 채팅 메시지 전송
      *
      * @param me 메시지를 보내는 사용자 번호 (DB에서 user_id)
      * @param req 채팅 요청 정보
@@ -136,7 +136,8 @@ public class ChatService {
     }
 
     /**
-     * BUZZ: 채팅방 참여자들에게 버즈를 보낸다.
+     * BUZZ: 채팅방 참여자(들)에게 버즈를 보낸다.
+     * 일상모드(1:1)에서만 일어난다.
      */
 	public void buzz(long me, BuzzRequest req) {
 
