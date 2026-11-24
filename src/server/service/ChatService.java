@@ -29,7 +29,7 @@ public class ChatService {
     private final MessageDAO messageDAO;
     private final RoomDAO roomDAO;
     private final UserDAO userDAO;
-    private final MeetingService meetingService; //얘를 가진 이유는?
+    private final MeetingService meetingService;
     private final SessionRegistry registry;
 
     /**
@@ -84,17 +84,19 @@ public class ChatService {
         //3. 메시지를 DB에 저장 + 생성된 메시지 번호 가져오기
         long messageId = messageDAO.insert(roomId, me, content);
         
+        //+ MeetingService의 회의 중 마지막 발언 기록
+        meetingService.recordSpeech(roomId, messageId);
+        
         //4. MessageDAO로 저장된 메시지 정보를 조회해서 조회한 결과를 MessageDTO로 가져온다.
         MessageDTO messageDTO = messageDAO.findById(messageId);
         
-        //5. 보낼 대상 정리 (메시지를 받을 채팅방 참여자들의 로그인 ID 조회 + 보낸 당사자는 제거)
-        List<String> memberLoginIds = new ArrayList<>(roomDAO.findMemberLoginIds(roomId));//채팅방의 다른 사용자들 불러오기
+        //5. 보낼 대상 정리 (메시지를 받을 채팅방 참여자들의 로그인 ID 조회)
+        List<String> memberLoginIds = new ArrayList<>(roomDAO.findMemberLoginIds(roomId));//채팅방의 모든 사용자들 불러오기
         
-        memberLoginIds.remove(sender.getLoginId());
-        
-        //6. SessionRegistry를 통해 채팅방의 다른 사용자들에게 메시지 전달
+        //6. SessionRegistry를 통해 채팅방의 모든 사용자들에게 메시지 전달
         registry.sendToAll(memberLoginIds, Command.CHAT_RECV, messageDTO);
     }
+    
 
     /**
      * TYPING: 사용자가 메시지를 입력 중임을 알린다
