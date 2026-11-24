@@ -85,7 +85,7 @@ public class ChatService {
         long messageId = messageDAO.insert(roomId, me, content);
         
         //+ MeetingService의 회의 중 마지막 발언 기록
-        meetingService.recordSpeech(roomId, messageId);
+        meetingService.recordSpeech(roomId, me);
         
         //4. MessageDAO로 저장된 메시지 정보를 조회해서 조회한 결과를 MessageDTO로 가져온다.
         MessageDTO messageDTO = messageDAO.findById(messageId);
