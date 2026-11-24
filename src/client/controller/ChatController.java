@@ -176,6 +176,7 @@ public class ChatController implements ServerListener {
         }
     }
 
+    
     /**
     * 1. 서버에서 받은 메시지를 뷰 동작으로 연결
     *     4)연결 종료 후 화면 및 데이터 정리
