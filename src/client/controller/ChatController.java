@@ -10,7 +10,7 @@ import javax.swing.SwingUtilities;
 import client.network.ServerConnection;
 import client.network.ServerListener;
 import client.model.ChatModel;
-import client.view.MainView; //이건 아직 안만들어져 있음. 근데 필요
+//import client.view.MainView; //이건 아직 안만들어져 있음. 근데 필요
 import client.view.ChatView;
 
 import common.Message;
@@ -35,25 +35,34 @@ public class ChatController implements ServerListener {
     private ChatModel model;
     private CommandHandler commandHandler;
 
-    private MainView mainView; //이건 아직 안만들어져 있음. 근데 필요
-    private Map<Long, ChatView> chatViews;
+//    private MainView mainView; //이건 아직 안만들어져 있음. 근데 필요
+    private Map<Long, ChatView> chatViews = new HashMap<>();
 
     public ChatController(ServerConnection connection,
                           ChatModel model,
                           CommandHandler commandHandler) {
-
+        this.connection = connection;
+        this.model = model;
+        this.commandHandler = commandHandler;
+        
+        //ServerConnection에 ChatController를 리스너로 등록
+        connection.setListener(this);
     }
+    
     /**
     * 1. 서버에서 받은 메시지를 뷰 동작으로 연결
+    *     1) 
     *
-    * - 
+    * - 메시지 왔음
+    * - 서버 연결 종료 시 호출
+    * - 메시지 처리 - Model, View
+    * - 연결 종료 후 화면 및 데이터 정리
 
     */
 
-
     @Override
     public void onMessage(Message msg) {
-    	SwingUtilities.invokeLater(() -> handle(msg)); //view
+    	SwingUtilities.invokeLater(() -> handle(msg)); //handle() 실행작업을 EDT 대기열에 등록
     }
 
     @Override
@@ -62,12 +71,129 @@ public class ChatController implements ServerListener {
     }
 
     //Command 종류에 따라 응답 분류 및 처리
-    //Model 갱신, View 갱신
+    //result, noti, info 메시지들
+    //Model, View 처리
     private void handle(Message msg) {
+    	
+    	//오늘 테스트를 위한 임시 출력문
+        System.out.println("서버 응답: " + msg.getType());
+        System.out.println("응답 데이터: " + msg.getData());
+        
+        //model, view만들어져야 가능
+    	switch (msg.getType()) {
+
+        // ===== 회원 =====
+        case ID_CHECK_RESULT:
+            break;
+
+        case JOIN_RESULT:
+        	
+            break;
+
+        case LOGIN_RESULT:
+        	
+            break;
+
+        // ===== 친구 =====
+        case SEARCH_RESULT:
+        	
+            break;
+
+        case FRIEND_ADD_RESULT:
+        	
+            break;
+
+        case FRIEND_NOTI:
+        	
+            break;
+
+        case FRIEND_LIST:
+        	//친구목록 Model 갱신
+        	//MainView에 친구 목록 갱신요청
+            break;
+
+        // ===== 상태 및 프로필 =====
+        case STATUS_NOTI:
+        	
+            break;
+
+        case PROFILE_UPDATE_RESULT:
+        	
+            break;
+
+        case PROFILE_NOTI:
+        	
+            break;
+
+        // ===== 대화방 =====
+        case ROOM_CREATE_RESULT:
+        	
+            break;
+
+        case ROOM_INFO:
+        	
+            break;
+
+        case ROOM_LIST:
+        	
+            break;
+
+        case ROOM_INVITED:
+        	
+            break;
+
+        // ===== 채팅 =====
+        case CHAT_RECV:
+        	
+            break;
+
+        case TYPING_NOTI:
+        	
+            break;
+
+        // ===== 일상 모드 =====
+        case BUZZ_RECV:
+        	
+            break;
+
+        // ===== 업무 모드 =====
+        case NOTICE_NOTI:
+        	
+            break;
+
+        case MEETING_NOTI:
+        	
+            break;
+
+        case NUDGE_NOTI:
+        	
+            break;
+
+        // ===== 공통 =====
+        case ERROR:
+        	
+            break;
+        }
     }
 
+    /**
+    * 1. 서버에서 받은 메시지를 뷰 동작으로 연결
+    *     4)연결 종료 후 화면 및 데이터 정리
+    */
     private void handleDisconnected() {
+        // 1. 열려 있는 모든 채팅 화면 닫기
+        for (ChatView view : chatViews.values()) {
+            view.dispose();
+        }
 
+        // 2. 채팅 화면 목록 초기화???해야하려나
+        chatViews.clear();
+
+        // 3. Model 초기화
+        // model의 초기화 메서드 확인 후 작성
+
+        // 4. MainView에 연결 종료 처리 요청
+        // MainView의 메서드 확인 후 작성
     }
     
     
@@ -176,24 +302,25 @@ public class ChatController implements ServerListener {
         connection.send(Command.NOTICE_SET, data);
     }
 
-    public void toggleMeeting(long roomId) {
-        MeetingRequest data = new MeetingRequest(roomId);
-
-        if (isMeeting) {
-            connection.send(Command.MEETING_START, data);
-        } else {
-            connection.send(Command.MEETING_END, data);
-        }
-    }
+    //이거 메소드 startMeeting, endMeeting 두 개로 나눠도 괜찮을지
+//    public void toggleMeeting(long roomId) {
+//        MeetingRequest data = new MeetingRequest(roomId);
+//
+//        if (isMeeting) {
+//            connection.send(Command.MEETING_START, data);
+//        } else {
+//            connection.send(Command.MEETING_END, data);
+//        }
+//    }
 
     /**
     * 3. 화면 관리
     * - 
 
     */
-    public void setMainView(MainView view) {
-    	this.mainView = view;
-    }
+//    public void setMainView(MainView view) {
+//    	this.mainView = view;
+//    }
 
     public void closeChatView(long roomId) {
         ChatView view = chatViews.remove(roomId);
@@ -202,5 +329,7 @@ public class ChatController implements ServerListener {
             view.dispose(); //swing창 닫기
         }
     }
+    
+    //메소드 추가? openChatView(long roomId)
 
 }
