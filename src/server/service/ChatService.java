@@ -122,6 +122,7 @@ public class ChatService {
         }
 
         // 3. 보낼 대상 정리 (메시지를 받을 채팅방 참여자들의 로그인 ID 조회 + 보낸 당사자는 제거)
+        //일상모드의 나중의 그룹채팅의 확장을 위해 list로 처리
         List<String> memberLoginIds =
                 new ArrayList<>(roomDAO.findMemberLoginIds(roomId));
 
@@ -137,7 +138,40 @@ public class ChatService {
     /**
      * BUZZ: 채팅방 참여자들에게 버즈를 보낸다.
      */
-    public void buzz(long me, BuzzRequest req) {}
+	public void buzz(long me, BuzzRequest req) {
+
+	    // 0. 요청 검증
+	    if (req == null) {
+	        throw new ServiceException("버즈 요청이 없습니다.");
+	    }
+
+	    long roomId = req.getRoomId(); //아래에서 필요한 데이터 가져오기
+
+	    // 1. 요청한 사용자가 채팅방 멤버인지 확인
+	    if (!roomDAO.isMember(roomId, me)) {
+	        throw new ServiceException("채팅방에 참여한 사용자만 버즈를 보낼 수 있습니다.");
+	    }
+
+	    // 2. 사용자 정보 조회
+	    UserDTO sender = userDAO.findById(me);
+
+	    if (sender == null) {
+	        throw new ServiceException("사용자를 찾을 수 없습니다.");
+	    }
+
+	    // 3. 보낼 대상 정리 (메시지를 받을 채팅방 참여자들의 로그인 ID 조회 + 보낸 당사자는 제거)
+	    List<String> memberLoginIds =
+	            new ArrayList<>(roomDAO.findMemberLoginIds(roomId));
+
+	    memberLoginIds.remove(sender.getLoginId());
+
+	    // 4. 버즈 알림데이터 생성
+	    BuzzRecv noti = new BuzzRecv(roomId, sender.getLoginId());
+
+	    //5. 상대방에게 버즈 알림 전송
+	    registry.sendToAll(memberLoginIds, Command.BUZZ_RECV, noti);
+    }
+
 
     /**
      * 메시지 내용 검증
