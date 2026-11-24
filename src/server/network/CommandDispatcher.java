@@ -29,7 +29,7 @@ public class CommandDispatcher {
 
 		// 로그인 전이고, 요청이 ID_CHECK도 아니고 JOIN도 아니고 LOGIN도 아니면 → ERROR 보내고 끝
 		if (!handler.isLoggedIn() && type != Command.ID_CHECK && type != Command.JOIN && type != Command.LOGIN) {
-			sendError(handler, type, "로그인이 필요합니다.");
+			handler.send(Command.ERROR, new ErrorDTO(type.name(), "로그인이 필요합니다."));
 			return;
 		}
 
@@ -61,30 +61,18 @@ public class CommandDispatcher {
 				break;
 			}
 			// FriendService
-			case SEARCH: {
-				SearchRequest req = (SearchRequest) msg.getData();
-				SearchResult result = friendService.search(me, req);
-				handler.send(Command.SEARCH_RESULT, result);
-				break;
-			}
-			case FRIEND_ADD: {
-				FriendAddRequest req = (FriendAddRequest) msg.getData();
-				FriendAddResult result = friendService.addFriend(me, req);
-				handler.send(Command.FRIEND_ADD_RESULT, result);
-				break;
-			}
 			case STATUS: {
-				StatusRequest req = (StatusRequest) msg.getData();
-				friendService.changeStatus(me, req);
 				break;
 			}
 			case PROFILE_UPDATE: {
-				ProfileUpdateRequest req = (ProfileUpdateRequest) msg.getData();
-				ProfileUpdateResult result = friendService.updateProfile(me, req);
-				handler.send(Command.PROFILE_UPDATE_RESULT, result);
 				break;
 			}
-
+			case SEARCH: {
+				break;
+			}
+			case FRIEND_ADD: {
+				break;
+			}
 			// RoomService
 			case ROOM_OPEN: {
 				RoomOpenRequest req = (RoomOpenRequest) msg.getData();
@@ -160,10 +148,17 @@ public class CommandDispatcher {
 
 	}
 
-	private Command resultTypeOf(Command type) { // switch -> try catch로 변경
-		try {
-			return Command.valueOf(type.name() + "_RESULT"); // "SEARCH" + "_RESULT" → SEARCH_RESULT
-		} catch (IllegalArgumentException e) {
+	private Command resultTypeOf(Command type) {
+		switch (type) {
+		case ID_CHECK:
+			return Command.ID_CHECK_RESULT;
+		case JOIN:
+			return Command.JOIN_RESULT;
+		case LOGIN:
+			return Command.LOGIN_RESULT;
+		case ROOM_CREATE:
+			return Command.ROOM_CREATE_RESULT;
+		default:
 			return null;
 		}
 	}
