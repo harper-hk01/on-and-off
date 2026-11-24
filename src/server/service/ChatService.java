@@ -178,5 +178,9 @@ public class ChatService {
      *
      * @param content 메시지 내용
      */
-    private void validateContent(String content) {    }
+    private void validateContent(String content) {
+        if (content == null || content.isBlank()) {
+            throw new ServiceException("메시지 내용이 비어있습니다.");
+        }
+    }
 }
