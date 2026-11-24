@@ -378,9 +378,6 @@ public class MainView extends JFrame implements ActionListener {
 		model.getFriends().addListDataListener(listChanges);
 		model.getRooms().addListDataListener(listChanges);
 		refreshLists();
-		
-		//로그인 화면 열기
-		showLogin();
 
 	}
 
