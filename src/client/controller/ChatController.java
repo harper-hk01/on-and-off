@@ -83,21 +83,21 @@ public class ChatController implements ServerListener {
         //model, view만들어져야 가능
     	switch (msg.getType()) {
 
+    	//성공했을 때는 화면 변화 없는 것만 팝업 표현하고, 실패는 다 팝업 표시
         // ===== 회원 =====
         case ID_CHECK_RESULT:
-        	IdCheckResult idCheckResult = (IdCheckResult) msg.getData(); //dto.response로 형변환
+        	IdCheckResult idCheckResult = (IdCheckResult) msg.getData(); //(성공 or 실패 여부를 나타내는 ResultDTO 상속받는 애로 형변환)
         	if(idCheckResult.isSuccess()) {
         		mainView.showMessage("사용 가능한 아이디입니다");
         	}
         	else {
-        		idCheckResult.getMessage(); //실패이유 메시지
+        		mainView.showMessage(idCheckResult.getMessage());//실패이유 메시지
         	}
             break;
 
         case JOIN_RESULT: //가입완료
         	JoinResult joinResult = (JoinResult) msg.getData();
         	if(joinResult.isSuccess()) {
-        		mainView.showMessage("회원가입에 성공하셨습니다!");
         		mainView.showLogin();//로그인 페이지 보여주기
         	}
         	else {
@@ -108,32 +108,51 @@ public class ChatController implements ServerListener {
         case LOGIN_RESULT:
         	LoginResult loginResult = (LoginResult) msg.getData();
         	if(loginResult.isSuccess()) {
-        		model.setMe(loginResult.getMe());
-        		mainView.showMain();
+        		model.setMe(loginResult.getMe()); //로그인한 사람의 UserDTO
+        		mainView.showMain(); //메인화면 띄우기 -> 친구목록, 대화방이런건 다른 명령어로???
+        	} else {
+        		mainView.showMessage(loginResult.getMessage());
         	}
             break;
 
         // ===== 친구 =====
         case SEARCH_RESULT:
+        	SearchResult searchResult = (SearchResult) msg.getData();
+        	if(searchResult.isSuccess()) {
+        		UserDTO found = searchResult.getUser();
+        		//검색 결과 어디에 표현함??
+        	}
+        	else {
+        		mainView.showMessage(searchResult.getMessage());
+        	}
         	
             break;
 
-        case FRIEND_ADD_RESULT:
+        case FRIEND_ADD_RESULT: //내가 다른이를 친구 추가 성공했다
+        	FriendAddResult friendAddResult = (FriendAddResult) msg.getData();
+        	if (friendAddResult.isSuccess()) {
+        		model.addFriend(friendAddResult.getFriend());//model에 친구 추가
+        		//메인 화면 친구 목록에 친구 추가된 모습? 아니면 표시?
+        	} else {
+        		mainView.showMessage(friendAddResult.getMessage());
+        	}
         	
             break;
 
-        case FRIEND_NOTI:
-        	
+        case FRIEND_NOTI: //누군가 나를 친구로 추가했을 떄 내 목록에도 추가
+        	UserDTO newFriend = (UserDTO) msg.getData();
+        	model.addFriend(newFriend);
             break;
 
-        case FRIEND_LIST:
-        	//친구목록 Model 갱신
-        	//MainView에 친구 목록 갱신요청
+        case FRIEND_LIST: //로그인 직후 친구목록 전송 (접속 중인 치구 위로?? 어케함)
+        	List<UserDTO> friendList = (List<UserDTO>) msg.getData();
+        	model.setFriends(friendList); //친구목록 Model 갱신 -> JList는 자동으로 갱신!!
             break;
 
         // ===== 상태 및 프로필 =====
         case STATUS_NOTI:
-        	
+        	StatusNoti statusNoti = (StatusNoti) msg.getData();
+        	model.updateFriendStatus(statusNoti.getLoginId(), statusNoti.getStatus());
             break;
 
         case PROFILE_UPDATE_RESULT:
