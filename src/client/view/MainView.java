@@ -638,7 +638,7 @@ public class MainView extends JFrame implements ActionListener {
 		}
 	}
 
-	 // JList가 한 행을 그릴 때 친구 또는 채팅방의 어떤 정보를 표시할지 정한다.
+	 // 리스트 렌더러 - JList가 한 행을 그릴 때 친구 또는 채팅방의 어떤 정보를 표시할지 정한다.
 	private class ListRenderer extends DefaultListCellRenderer {
 		@Override
 		public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean selected,
@@ -704,7 +704,9 @@ public class MainView extends JFrame implements ActionListener {
 		joinPassword.setText("");
 		nickname.setText("");
 		tabs.setSelectedIndex(0);
+		
 		cards.show(pages, "login");
+		setVisible(true);
 	}
 
 	public void showJoin() {
