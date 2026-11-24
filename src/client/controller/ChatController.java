@@ -52,12 +52,7 @@ public class ChatController implements ServerListener {
     
     /**
     * 1. 서버에서 받은 메시지를 뷰 동작으로 연결
-    *     1) 
-    *
-    * - 메시지 왔음
-    * - 서버 연결 종료 시 호출
-    * - 메시지 처리 - Model, View
-    * - 연결 종료 후 화면 및 데이터 정리
+    *     1) 메시지 왔음, 서버 연결 종료 시 호출
 
     */
 
@@ -70,6 +65,11 @@ public class ChatController implements ServerListener {
     public void onDisconnected() {
     	SwingUtilities.invokeLater(() -> handleDisconnected());
     }
+    
+    /**
+    * 1. 서버에서 받은 메시지를 뷰 동작으로 연결
+    *     2) 메시지 처리 - Model, View
+    */
 
     //Command 종류에 따라 응답 분류 및 처리
     //result, noti, info 메시지들
@@ -156,30 +156,50 @@ public class ChatController implements ServerListener {
             break;
 
         case PROFILE_UPDATE_RESULT:
-        	
+        	ProfileUpdateResult profileResult = (ProfileUpdateResult) msg.getData();
+        	if (profileResult.isSuccess()) {
+        		mainView.showMessage("프로필을 변경했습니다.");
+        	} else {
+        		mainView.showMessage(profileResult.getMessage());
+        	}
             break;
 
         case PROFILE_NOTI:
-        	
+        	UserDTO changedFriend = (UserDTO) msg.getData();
+        	model.updateFriend(changedFriend); // ChatModel에서 DefaultListModel 사용되면서 새정보로 교체됨!
             break;
 
         // ===== 대화방 =====
         case ROOM_CREATE_RESULT:
+        	RoomCreateResult roomCreateResult = (RoomCreateResult) msg.getData();
+        	if (roomCreateResult.isSuccess()) {
+        		ChatRoomDTO newRoom = roomCreateResult.getRoom();
+        		if (model.getRoom(newRoom.getRoomId()) == null) {
+        			model.addRoom(newRoom);
+        		}
+        		enterRoom(newRoom.getRoomId()); //만든 사람은 바로 입장 → ROOM_INFO로 응답 옴
+        	} else {
+        		mainView.showMessage(roomCreateResult.getMessage());
+        	}
+            break;
+
+        case ROOM_INFO: //ROOM_OPEN, ROOM_ENTER 둘 다 이걸로 응답 옴
         	
             break;
 
-        case ROOM_INFO:
-        	
+        case ROOM_LIST: //로그인 직후 방 초기화?
+        	List<ChatRoomDTO> roomList = (List<ChatRoomDTO>) msg.getData();
+        	model.setRooms(roomList);
             break;
 
-        case ROOM_LIST:
-        	
+        case ROOM_INVITED: //새 방은 대화방 목록에 추가 (누가 나를 방에 초대함)
+          	ChatRoomDTO invitedRoom = (ChatRoomDTO) msg.getData();
+        	if (model.getRoom(invitedRoom.getRoomId()) == null) { //if문 넣어야 할까?
+        		model.addRoom(invitedRoom);
+        	}
             break;
 
-        case ROOM_INVITED:
-        	
-            break;
-
+        //해당하는 방에
         // ===== 채팅 =====
         case CHAT_RECV:
         	
@@ -190,7 +210,7 @@ public class ChatController implements ServerListener {
             break;
 
         // ===== 일상 모드 =====
-        case BUZZ_RECV:
+        case BUZZ_RECV: //CommandHandler에 보내기
         	
             break;
 
@@ -203,21 +223,27 @@ public class ChatController implements ServerListener {
         	
             break;
 
-        case NUDGE_NOTI:
-        	
+        case NUDGE_NOTI: //CommandHandler에 보내기
+        	NudgeNoti nudgeNoti = (NudgeNoti) msg.getData();
+        	ChatView nudgeView = chatViews.get(nudgeNoti.getRoomId());//roomId에 맞는 해당 ChatView 불러오기
+        	if (nudgeView != null) {
+        		commandHandler.handleCommand(msg, nudgeView); //CommandHandler로 넘김
+        	}
             break;
 
         // ===== 공통 =====
         case ERROR:
+        	ErrorDTO error = (ErrorDTO) msg.getData();
+        	mainView.showMessage(error.getMessage());
         	
             break;
-        }
+    	}
     }
 
     
     /**
     * 1. 서버에서 받은 메시지를 뷰 동작으로 연결
-    *     4)연결 종료 후 화면 및 데이터 정리
+    *     3)연결 종료 후 화면 및 데이터 정리
     */
     private void handleDisconnected() {
         // 1. 열려 있는 모든 채팅 화면 닫기
