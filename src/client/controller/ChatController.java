@@ -15,6 +15,8 @@ import client.view.MainView; //이건 아직 안만들어져 있음. 근데 필�
 import common.Command;
 import common.Message;
 import dto.common.ChatRoomDTO;
+import dto.common.MeetingState;
+import dto.common.MessageDTO;
 import dto.common.Status;
 import dto.common.UserDTO;
 import dto.request.BuzzRequest;
@@ -23,6 +25,8 @@ import dto.request.FriendAddRequest;
 import dto.request.IdCheckRequest;
 import dto.request.JoinRequest;
 import dto.request.LoginRequest;
+import dto.request.MeetingEndRequest;
+import dto.request.MeetingStartRequest;
 import dto.request.NoticeSetRequest;
 import dto.request.ProfileUpdateRequest;
 import dto.request.RoomCreateRequest;
@@ -32,16 +36,21 @@ import dto.request.RoomReadRequest;
 import dto.request.SearchRequest;
 import dto.request.StatusRequest;
 import dto.request.TypingRequest;
+import dto.response.BuzzRecv;
 import dto.response.ErrorDTO;
 import dto.response.FriendAddResult;
 import dto.response.IdCheckResult;
 import dto.response.JoinResult;
 import dto.response.LoginResult;
+import dto.response.MeetingNoti;
+import dto.response.NoticeNoti;
 import dto.response.NudgeNoti;
 import dto.response.ProfileUpdateResult;
 import dto.response.RoomCreateResult;
+import dto.response.RoomInfo;
 import dto.response.SearchResult;
 import dto.response.StatusNoti;
+import dto.response.TypingNoti;
 
 
 /**
@@ -172,7 +181,7 @@ public class ChatController implements ServerListener {
             break;
 
         // ===== 상태 및 프로필 =====
-        case STATUS_NOTI:
+        case STATUS_NOTI: //친구가 상태 바꿈
         	StatusNoti statusNoti = (StatusNoti) msg.getData();
         	model.updateFriendStatus(statusNoti.getLoginId(), statusNoti.getStatus());
             break;
@@ -206,7 +215,38 @@ public class ChatController implements ServerListener {
             break;
 
         case ROOM_INFO: //ROOM_OPEN, ROOM_ENTER 둘 다 이걸로 응답 옴
-        	
+        	RoomInfo roomInfo = (RoomInfo) msg.getData();
+        	ChatRoomDTO room = roomInfo.getRoom();
+        	long infoRoomId = room.getRoomId();
+
+        	// 1. Model 갱신
+        	if (model.getRoom(infoRoomId) == null) {
+        		model.addRoom(room);
+        	}
+        	model.setMessages(infoRoomId, roomInfo.getMessages());
+        	model.setMeetingActive(infoRoomId, roomInfo.isMeeting());
+        	model.setPinnedMessage(infoRoomId, room.getPinnedMessage());
+        	model.setRoomNew(infoRoomId, false);
+
+        	// 2. 채팅창 열기 (없으면 새로 만들고, 있으면 내용만 다시 채움)
+        	ChatView roomView = chatViews.get(infoRoomId);
+        	if (roomView == null) {
+        		roomView = new ChatView(infoRoomId, this, model); //생성자가 Model 보고 화면을 채움
+        		chatViews.put(infoRoomId, roomView);
+        	} else {
+        		roomView.showMessages(model.getMessages(infoRoomId));
+        		roomView.showNotice(room.getPinnedMessage());
+        		roomView.setMeetingState(roomInfo.isMeeting());
+        	}
+        	roomView.setVisible(true);
+        	roomView.toFront();
+
+        	// 3. 마지막 메시지까지 읽음 처리
+        	List<MessageDTO> history = model.getMessages(infoRoomId);
+        	if (history.size() > 0) {
+        		MessageDTO last = history.get(history.size() - 1);
+        		markRead(infoRoomId, last.getMessageId());
+        	}
             break;
 
         case ROOM_LIST: //로그인 직후 방 초기화?
@@ -224,25 +264,64 @@ public class ChatController implements ServerListener {
         //해당하는 방에
         // ===== 채팅 =====
         case CHAT_RECV:
-        	
+        	MessageDTO chat = (MessageDTO) msg.getData();
+        	long chatRoomId = chat.getRoomId();
+        	model.addMessage(chat);
+
+        	ChatView chatView = chatViews.get(chatRoomId);
+        	if (chatView != null) {
+        		// 창이 열려 있음 -> 화면에 추가하고 읽음 처리
+        		chatView.appendMessage(chat);
+        		markRead(chatRoomId, chat.getMessageId());
+        		model.setRoomNew(chatRoomId, false); //방 목록의 마지막 메시지 표시 갱신용
+        	} else {
+        		// 창이 닫혀 있음 -> NEW 표시, 남이 보낸 거면 팝업
+        		model.setRoomNew(chatRoomId, true);
+        		String myId = model.getMe().getLoginId();
+        		if (!myId.equals(chat.getSenderId())) {
+        			mainView.showPopup(chat);
+        		}
+        	}
             break;
 
         case TYPING_NOTI:
-        	
+          	TypingNoti typingNoti = (TypingNoti) msg.getData();
+        	ChatView typingView = chatViews.get(typingNoti.getRoomId());
+        	if (typingView != null) {
+        		typingView.showTyping(typingNoti.getLoginId());
+        	}
             break;
 
         // ===== 일상 모드 =====
         case BUZZ_RECV: //-> CommandHandler에 보내기
-        	
+         	BuzzRecv buzzRecv = (BuzzRecv) msg.getData();
+        	ChatView buzzView = chatViews.get(buzzRecv.getRoomId());
+        	if (buzzView != null) {
+        		commandHandler.handleCommand(msg, buzzView);
+        	}
             break;
 
         // ===== 업무 모드 =====
         case NOTICE_NOTI:
-        	
+          	NoticeNoti noticeNoti = (NoticeNoti) msg.getData();
+        	model.setPinnedMessage(noticeNoti.getRoomId(), noticeNoti.getPinnedMessage()); //null이면 공지 해제
+        	ChatView noticeView = chatViews.get(noticeNoti.getRoomId());
+        	if (noticeView != null) {
+        		noticeView.showNotice(noticeNoti.getPinnedMessage());
+        	}
             break;
 
-        case MEETING_NOTI: //회의 시작
-        	
+        case MEETING_NOTI: //회의 시작/종료 + 버튼 전환디ㅣ
+        	MeetingNoti meetingNoti = (MeetingNoti) msg.getData();
+        	boolean active = false;
+        	if (meetingNoti.getState() == MeetingState.START) {
+        		active = true;
+        	}
+        	model.setMeetingActive(meetingNoti.getRoomId(), active);
+        	ChatView meetingView = chatViews.get(meetingNoti.getRoomId());
+        	if (meetingView != null) {
+        		meetingView.setMeetingState(active); //"── 회의 시작 ──" 문구는 ChatView가 찍음
+        	}
             break;
 
         case NUDGE_NOTI: //-> CommandHandler에 보내기
@@ -273,20 +352,22 @@ public class ChatController implements ServerListener {
             view.dispose();
         }
 
-        // 2. 채팅 화면 목록 초기화???해야하려나
+        // 2. 채팅 화면 목록 초기화
         chatViews.clear();
 
         // 3. Model 초기화
-        // model의 초기화 메서드 확인 후 작성
+        model.clear();
 
-        // 4. MainView에 연결 종료 처리 요청
-        // MainView의 메서드 확인 후 작성
+        // 4. MainView에 연결 종료 처리 요청 (서버에 다시 연결하는 기능이 없어서 그냥 프로그램 끄는 쪽으로, 로그인화면 돌아가기X)
+        mainView.showMessage("서버와 연결이 끊어졌습니다. 프로그램을 종료합니다.");
+        System.exit(0);
     }
     
     
     /**
     * 2. View에서 발생한 동작을 서버에 요청으로 연결
     *     1) 회원 및 사용자 기능
+    *   아래와 같이 계속 같은 구조임!
     */
 
     public void checkId(String loginId) {
@@ -336,8 +417,6 @@ public class ChatController implements ServerListener {
     /**
     * 2. View에서 발생한 동작을 서버에 요청으로 연결
     *     2) 채팅방 기능
-    * - 
-
     */
 
     public void openRoom(String friendLoginId) {
@@ -385,16 +464,16 @@ public class ChatController implements ServerListener {
         connection.send(Command.NOTICE_SET, data);
     }
 
-    //이거 메소드 startMeeting, endMeeting 두 개로 나눠도 괜찮을지
-//    public void toggleMeeting(long roomId) {
-//        MeetingRequest data = new MeetingRequest(roomId);
-//
-//        if (isMeeting) {
-//            connection.send(Command.MEETING_START, data);
-//        } else {
-//            connection.send(Command.MEETING_END, data);
-//        }
-//    }
+    // 회의 중이면 종료 요청, 아니면 시작 요청 (Model은 MEETING_NOTI가 왔을 때 바꿈)
+    public void toggleMeeting(long roomId) {
+    	if (model.isMeetingActive(roomId)) {
+    		MeetingEndRequest data = new MeetingEndRequest(roomId);
+    		connection.send(Command.MEETING_END, data);
+    	} else {
+    		MeetingStartRequest data = new MeetingStartRequest(roomId);
+    		connection.send(Command.MEETING_START, data);
+    	}
+    }
 
     /**
     * 3. 화면 관리
