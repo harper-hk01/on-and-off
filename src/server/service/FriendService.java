@@ -6,10 +6,19 @@ import java.util.logging.Logger;
 
 import common.Command;
 import common.Protocol;
-import dto.common.*;
-import dto.request.*;
-import dto.response.*;
-import server.dao.*;
+import dto.common.Status;
+import dto.common.UserDTO;
+import dto.request.FriendAddRequest;
+import dto.request.ProfileUpdateRequest;
+import dto.request.SearchRequest;
+import dto.request.StatusRequest;
+import dto.response.FriendAddResult;
+import dto.response.ProfileUpdateResult;
+import dto.response.SearchResult;
+import dto.response.StatusNoti;
+import server.dao.DAOException;
+import server.dao.FriendDAO;
+import server.dao.UserDAO;
 import server.session.SessionRegistry;
 
 /**
