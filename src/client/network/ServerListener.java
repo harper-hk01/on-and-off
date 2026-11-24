@@ -1,5 +1,8 @@
 package client.network;
 
-public interface ServerListener {
+import common.Message;
 
+public interface ServerListener {
+	public void onMessage(Message msg);
+	public void onDisconnected();
 }

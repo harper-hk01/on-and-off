@@ -85,8 +85,8 @@ public class ChatService {
         long messageId = messageDAO.insert(roomId, me, content);
         
         //+ MeetingService의 회의 중 마지막 발언 기록
-        meetingService.recordSpeech(roomId, me);
-
+        meetingService.recordSpeech(roomId, messageId);
+        
         //4. MessageDAO로 저장된 메시지 정보를 조회해서 조회한 결과를 MessageDTO로 가져온다.
         MessageDTO messageDTO = messageDAO.findById(messageId);
         
@@ -154,7 +154,6 @@ public class ChatService {
 	        throw new ServiceException("채팅방에 참여한 사용자만 버즈를 보낼 수 있습니다.");
 	    }
 
-	    
 	    // 2. 사용자 정보 조회
 	    UserDTO sender = userDAO.findById(me);
 
