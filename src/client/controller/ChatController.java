@@ -10,7 +10,7 @@ import javax.swing.SwingUtilities;
 import client.network.ServerConnection;
 import client.network.ServerListener;
 import client.model.ChatModel;
-//import client.view.MainView; //이건 아직 안만들어져 있음. 근데 필요
+import client.view.MainView; //이건 아직 안만들어져 있음. 근데 필요
 import client.view.ChatView;
 
 import common.Message;
@@ -20,6 +20,7 @@ import dto.common.UserDTO;
 import dto.common.MessageDTO;
 import dto.common.ChatRoomDTO;
 import dto.request.*;
+import dto.response.IdCheckResult;
 
 /**
  * 서버와 통신하고, 받은 데이터를 해석해서 적절한 동작을 연결하는 전체 관리자
@@ -35,7 +36,7 @@ public class ChatController implements ServerListener {
     private ChatModel model;
     private CommandHandler commandHandler;
 
-//    private MainView mainView; //이건 아직 안만들어져 있음. 근데 필요
+    private MainView mainView;
     private Map<Long, ChatView> chatViews = new HashMap<>();
 
     public ChatController(ServerConnection connection,
@@ -84,6 +85,10 @@ public class ChatController implements ServerListener {
 
         // ===== 회원 =====
         case ID_CHECK_RESULT:
+        	IdCheckResult result = (IdCheckResult) msg.getData();
+        	if(result.isSuccess()) {
+        		mainView.showMessage("사용 가능한 아이디입니다");
+        	}
             break;
 
         case JOIN_RESULT:
@@ -319,9 +324,9 @@ public class ChatController implements ServerListener {
     * - 
 
     */
-//    public void setMainView(MainView view) {
-//    	this.mainView = view;
-//    }
+    public void setMainView(MainView view) {
+    	this.mainView = view;
+    }
 
     public void closeChatView(long roomId) {
         ChatView view = chatViews.remove(roomId);
