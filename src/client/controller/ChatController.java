@@ -20,7 +20,7 @@ import dto.common.UserDTO;
 import dto.common.MessageDTO;
 import dto.common.ChatRoomDTO;
 import dto.request.*;
-import dto.response.IdCheckResult;
+import dto.response.*;
 
 /**
  * 서버와 통신하고, 받은 데이터를 해석해서 적절한 동작을 연결하는 전체 관리자
@@ -85,18 +85,32 @@ public class ChatController implements ServerListener {
 
         // ===== 회원 =====
         case ID_CHECK_RESULT:
-        	IdCheckResult result = (IdCheckResult) msg.getData();
-        	if(result.isSuccess()) {
+        	IdCheckResult idCheckResult = (IdCheckResult) msg.getData(); //dto.response로 형변환
+        	if(idCheckResult.isSuccess()) {
         		mainView.showMessage("사용 가능한 아이디입니다");
+        	}
+        	else {
+        		idCheckResult.getMessage(); //실패이유 메시지
         	}
             break;
 
-        case JOIN_RESULT:
-        	
+        case JOIN_RESULT: //가입완료
+        	JoinResult joinResult = (JoinResult) msg.getData();
+        	if(joinResult.isSuccess()) {
+        		mainView.showMessage("회원가입에 성공하셨습니다!");
+        		mainView.showLogin();//로그인 페이지 보여주기
+        	}
+        	else {
+        		mainView.showMessage(joinResult.getMessage());
+        	}
             break;
 
         case LOGIN_RESULT:
-        	
+        	LoginResult loginResult = (LoginResult) msg.getData();
+        	if(loginResult.isSuccess()) {
+        		model.setMe(loginResult.getMe());
+        		mainView.showMain();
+        	}
             break;
 
         // ===== 친구 =====
