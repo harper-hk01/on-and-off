@@ -3,10 +3,40 @@ package server.network;
 import common.Command;
 import common.Message;
 import dto.common.ResultDTO;
-import dto.request.*;
-import dto.response.*;
+import dto.request.BuzzRequest;
+import dto.request.ChatRequest;
+import dto.request.FriendAddRequest;
+import dto.request.IdCheckRequest;
+import dto.request.JoinRequest;
+import dto.request.LoginRequest;
+import dto.request.MeetingEndRequest;
+import dto.request.MeetingStartRequest;
+import dto.request.NoticeSetRequest;
+import dto.request.ProfileUpdateRequest;
+import dto.request.RoomCreateRequest;
+import dto.request.RoomEnterRequest;
+import dto.request.RoomOpenRequest;
+import dto.request.RoomReadRequest;
+import dto.request.SearchRequest;
+import dto.request.StatusRequest;
+import dto.request.TypingRequest;
+import dto.response.ErrorDTO;
+import dto.response.FriendAddResult;
+import dto.response.IdCheckResult;
+import dto.response.JoinResult;
+import dto.response.LoginResult;
+import dto.response.ProfileUpdateResult;
+import dto.response.RoomCreateResult;
+import dto.response.RoomInfo;
+import dto.response.SearchResult;
 import server.dao.DAOException;
-import server.service.*;
+import server.service.ChatService;
+import server.service.FriendService;
+import server.service.LoginInfo;
+import server.service.MeetingService;
+import server.service.RoomService;
+import server.service.ServiceException;
+import server.service.UserService;
 
 public class CommandDispatcher {
 	private final UserService userService;
@@ -56,7 +86,7 @@ public class CommandDispatcher {
 				break;
 			}
 			case LOGOUT: {
-				userService.logout(handler.getUserId(), handler.getLoginId(), handler);
+				userService.logout(me, handler.getLoginId(), handler);
 				handler.clearLoginUser(); // 연결은 유지, 로그인 정보만 지우기
 				break;
 			}
@@ -116,12 +146,18 @@ public class CommandDispatcher {
 			}
 			// ChatService
 			case CHAT: {
+				ChatRequest req = (ChatRequest) msg.getData();
+				chatService.sendChat(me, req);
 				break;
 			}
 			case TYPING: {
+				TypingRequest req = (TypingRequest) msg.getData();
+				chatService.typing(me, req);
 				break;
 			}
 			case BUZZ: {
+				BuzzRequest req = (BuzzRequest) msg.getData();
+				chatService.buzz(me, req);
 				break;
 			}
 			// MeetingService
