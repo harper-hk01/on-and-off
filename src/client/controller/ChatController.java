@@ -391,6 +391,7 @@ public class ChatController implements ServerListener {
 
     public void logout() {
         connection.send(Command.LOGOUT, null); //로그아웃만 전달
+        //로그아웃 화면 나가기!! 해야할 듯
     }
 
     public void searchUser(String loginId) {
@@ -406,6 +407,7 @@ public class ChatController implements ServerListener {
     public void changeStatus(Status status) { //상태를 받음
         StatusRequest data = new StatusRequest(status);
         connection.send(Command.STATUS, data);
+        //새로운 화면으로 보여주자!
     }
 
     public void updateProfile(String nickname, String statusMessage) {
