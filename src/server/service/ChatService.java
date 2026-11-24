@@ -154,6 +154,7 @@ public class ChatService {
 	        throw new ServiceException("채팅방에 참여한 사용자만 버즈를 보낼 수 있습니다.");
 	    }
 
+	    
 	    // 2. 사용자 정보 조회
 	    UserDTO sender = userDAO.findById(me);
 
