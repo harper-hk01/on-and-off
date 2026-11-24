@@ -14,6 +14,8 @@ import dto.response.*;
  * 괄호 안 = 그 명령어의 data를 담는 DTO 종류. data가 없으면 null.
  * Message.parse()가 이 정보를 보고 data를 알맞은 DTO로 바꾼다.
  */
+
+// 규칙 추가: 답장은 요청이름_RESULT로 짓는다
 public enum Command {
 
     // ===== 4.1 회원 =====
