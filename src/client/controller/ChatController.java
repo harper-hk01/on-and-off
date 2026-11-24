@@ -11,7 +11,7 @@ import client.model.ChatModel;
 import client.network.ServerConnection;
 import client.network.ServerListener;
 import client.view.ChatView;
-import client.view.MainView; //이건 아직 안만들어져 있음. 근데 필요
+import client.view.MainView;
 import common.Command;
 import common.Message;
 import dto.common.ChatRoomDTO;
@@ -106,12 +106,7 @@ public class ChatController implements ServerListener {
     //result, noti, info 메시지들
     //Model, View 처리
     private void handle(Message msg) {
-    	
-    	//오늘 테스트를 위한 임시 출력문
-        System.out.println("서버 응답: " + msg.getType());
-        System.out.println("응답 데이터: " + msg.getData());
         
-        //model, view만들어져야 가능
     	switch (msg.getType()) {
 
     	//성공했을 때는 화면 변화 없는 것만 팝업 표현하고, 실패는 다 팝업 표시
@@ -140,7 +135,7 @@ public class ChatController implements ServerListener {
         	LoginResult loginResult = (LoginResult) msg.getData();
         	if(loginResult.isSuccess()) {
         		model.setMe(loginResult.getMe()); //로그인한 사람의 UserDTO
-        		mainView.showMain(); //메인화면 띄우기 -> 친구목록, 대화방이런건 다른 명령어로???
+        		mainView.showMain(); //메인화면 띄우기 -> 친구목록, 대화방이런건 다른 명령어로 서버가 보내줌
         	} else {
         		mainView.showMessage(loginResult.getMessage());
         	}
@@ -151,7 +146,7 @@ public class ChatController implements ServerListener {
         	SearchResult searchResult = (SearchResult) msg.getData();
         	if(searchResult.isSuccess()) {
         		UserDTO found = searchResult.getUser();
-        		//검색 결과 어디에 표현함??
+        		//검색 결과 어디에 표현함?? 뷰에서 검색 버튼 자체가 없음!
         	}
         	else {
         		mainView.showMessage(searchResult.getMessage());
@@ -162,8 +157,7 @@ public class ChatController implements ServerListener {
         case FRIEND_ADD_RESULT: //내가 다른이를 친구 추가 성공했다
         	FriendAddResult friendAddResult = (FriendAddResult) msg.getData();
         	if (friendAddResult.isSuccess()) {
-        		model.addFriend(friendAddResult.getFriend());//model에 친구 추가
-        		//메인 화면 친구 목록에 친구 추가된 모습? 아니면 표시?
+        		model.addFriend(friendAddResult.getFriend());//model에 친구 추가 -> 화면 바로 나타남
         	} else {
         		mainView.showMessage(friendAddResult.getMessage());
         	}
@@ -214,26 +208,26 @@ public class ChatController implements ServerListener {
         	}
             break;
 
-        case ROOM_INFO: //ROOM_OPEN, ROOM_ENTER 둘 다 이걸로 응답 옴
+        case ROOM_INFO: //방입장 꾸러미. ROOM_OPEN, ROOM_ENTER 둘 다 이걸로 응답 옴
         	RoomInfo roomInfo = (RoomInfo) msg.getData();
         	ChatRoomDTO room = roomInfo.getRoom();
         	long infoRoomId = room.getRoomId();
 
         	// 1. Model 갱신
         	if (model.getRoom(infoRoomId) == null) {
-        		model.addRoom(room);
+        		model.addRoom(room); //처음 보는 방이면 목록에 추가
         	}
-        	model.setMessages(infoRoomId, roomInfo.getMessages());
-        	model.setMeetingActive(infoRoomId, roomInfo.isMeeting());
-        	model.setPinnedMessage(infoRoomId, room.getPinnedMessage());
-        	model.setRoomNew(infoRoomId, false);
+        	model.setMessages(infoRoomId, roomInfo.getMessages()); //이 방의 이전 대화 저장
+        	model.setMeetingActive(infoRoomId, roomInfo.isMeeting()); // 회의 중인지 저장
+        	model.setPinnedMessage(infoRoomId, room.getPinnedMessage()); //공지 저장
+        	model.setRoomNew(infoRoomId, false);//들어왔으니까 NEW 표시 끄기
 
         	// 2. 채팅창 열기 (없으면 새로 만들고, 있으면 내용만 다시 채움)
         	ChatView roomView = chatViews.get(infoRoomId);
         	if (roomView == null) {
         		roomView = new ChatView(infoRoomId, this, model); //생성자가 Model 보고 화면을 채움
-        		chatViews.put(infoRoomId, roomView);
-        	} else {
+        		chatViews.put(infoRoomId, roomView); 
+        	} else { //이미 있으면 내용만 최신으로
         		roomView.showMessages(model.getMessages(infoRoomId));
         		roomView.showNotice(room.getPinnedMessage());
         		roomView.setMeetingState(roomInfo.isMeeting());
@@ -244,8 +238,8 @@ public class ChatController implements ServerListener {
         	// 3. 마지막 메시지까지 읽음 처리
         	List<MessageDTO> history = model.getMessages(infoRoomId);
         	if (history.size() > 0) {
-        		MessageDTO last = history.get(history.size() - 1);
-        		markRead(infoRoomId, last.getMessageId());
+        		MessageDTO last = history.get(history.size() - 1); //가장 최근 메시지
+        		markRead(infoRoomId, last.getMessageId()); //읽었다고 서버에 알림
         	}
             break;
 
@@ -256,14 +250,14 @@ public class ChatController implements ServerListener {
 
         case ROOM_INVITED: //새 방은 대화방 목록에 추가 (누가 나를 방에 초대함)
           	ChatRoomDTO invitedRoom = (ChatRoomDTO) msg.getData();
-        	if (model.getRoom(invitedRoom.getRoomId()) == null) { //if문 넣어야 할까?
+        	if (model.getRoom(invitedRoom.getRoomId()) == null) {
         		model.addRoom(invitedRoom);
         	}
             break;
 
         //해당하는 방에
         // ===== 채팅 =====
-        case CHAT_RECV:
+        case CHAT_RECV: //채팅 하나 도착
         	MessageDTO chat = (MessageDTO) msg.getData();
         	long chatRoomId = chat.getRoomId();
         	model.addMessage(chat);
@@ -320,7 +314,7 @@ public class ChatController implements ServerListener {
         	model.setMeetingActive(meetingNoti.getRoomId(), active);
         	ChatView meetingView = chatViews.get(meetingNoti.getRoomId());
         	if (meetingView != null) {
-        		meetingView.setMeetingState(active); //"── 회의 시작 ──" 문구는 ChatView가 찍음
+        		meetingView.setMeetingState(active);
         	}
             break;
 
@@ -367,7 +361,7 @@ public class ChatController implements ServerListener {
     /**
     * 2. View에서 발생한 동작을 서버에 요청으로 연결
     *     1) 회원 및 사용자 기능
-    *   아래와 같이 계속 같은 구조임!
+    *   아래 모두 계속 같은 구조임!
     */
 
     public void checkId(String loginId) {
@@ -391,7 +385,13 @@ public class ChatController implements ServerListener {
 
     public void logout() {
         connection.send(Command.LOGOUT, null); //로그아웃만 전달
-        //로그아웃 화면 나가기!! 해야할 듯
+        //로그아웃 화면 나가기! (view에서 이 함수를 부름)
+        for (ChatView view : chatViews.values()) {
+            view.dispose();
+        }
+        chatViews.clear();
+        model.clear();
+        mainView.showLogin();
     }
 
     public void searchUser(String loginId) {
@@ -407,12 +407,16 @@ public class ChatController implements ServerListener {
     public void changeStatus(Status status) { //상태를 받음
         StatusRequest data = new StatusRequest(status);
         connection.send(Command.STATUS, data);
-        //새로운 화면으로 보여주자!
+        //새로운 상태로 갱신!
+        model.getMe().setStatus(status);
     }
 
     public void updateProfile(String nickname, String statusMessage) {
         ProfileUpdateRequest data = new ProfileUpdateRequest(nickname, statusMessage);
         connection.send(Command.PROFILE_UPDATE, data);
+        //새로운 상태로 갱신!
+        model.getMe().setNickname(nickname); 
+        model.getMe().setStatusMessage(statusMessage);
     }
     
     
