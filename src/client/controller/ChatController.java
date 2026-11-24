@@ -7,20 +7,42 @@ import java.util.Map;
 
 import javax.swing.SwingUtilities;
 
+import client.model.ChatModel;
 import client.network.ServerConnection;
 import client.network.ServerListener;
-import client.model.ChatModel;
-import client.view.MainView; //이건 아직 안만들어져 있음. 근데 필요
 import client.view.ChatView;
-
-import common.Message;
+import client.view.MainView; //이건 아직 안만들어져 있음. 근데 필요
 import common.Command;
+import common.Message;
+import dto.common.ChatRoomDTO;
 import dto.common.Status;
 import dto.common.UserDTO;
-import dto.common.MessageDTO;
-import dto.common.ChatRoomDTO;
-import dto.request.*;
-import dto.response.*;
+import dto.request.BuzzRequest;
+import dto.request.ChatRequest;
+import dto.request.FriendAddRequest;
+import dto.request.IdCheckRequest;
+import dto.request.JoinRequest;
+import dto.request.LoginRequest;
+import dto.request.NoticeSetRequest;
+import dto.request.ProfileUpdateRequest;
+import dto.request.RoomCreateRequest;
+import dto.request.RoomEnterRequest;
+import dto.request.RoomOpenRequest;
+import dto.request.RoomReadRequest;
+import dto.request.SearchRequest;
+import dto.request.StatusRequest;
+import dto.request.TypingRequest;
+import dto.response.ErrorDTO;
+import dto.response.FriendAddResult;
+import dto.response.IdCheckResult;
+import dto.response.JoinResult;
+import dto.response.LoginResult;
+import dto.response.NudgeNoti;
+import dto.response.ProfileUpdateResult;
+import dto.response.RoomCreateResult;
+import dto.response.SearchResult;
+import dto.response.StatusNoti;
+
 
 /**
  * 서버와 통신하고, 받은 데이터를 해석해서 적절한 동작을 연결하는 전체 관리자
@@ -210,7 +232,7 @@ public class ChatController implements ServerListener {
             break;
 
         // ===== 일상 모드 =====
-        case BUZZ_RECV: //CommandHandler에 보내기
+        case BUZZ_RECV: //-> CommandHandler에 보내기
         	
             break;
 
@@ -219,11 +241,11 @@ public class ChatController implements ServerListener {
         	
             break;
 
-        case MEETING_NOTI:
+        case MEETING_NOTI: //회의 시작
         	
             break;
 
-        case NUDGE_NOTI: //CommandHandler에 보내기
+        case NUDGE_NOTI: //-> CommandHandler에 보내기
         	NudgeNoti nudgeNoti = (NudgeNoti) msg.getData();
         	ChatView nudgeView = chatViews.get(nudgeNoti.getRoomId());//roomId에 맞는 해당 ChatView 불러오기
         	if (nudgeView != null) {
@@ -265,8 +287,6 @@ public class ChatController implements ServerListener {
     /**
     * 2. View에서 발생한 동작을 서버에 요청으로 연결
     *     1) 회원 및 사용자 기능
-    * - 
-
     */
 
     public void checkId(String loginId) {
@@ -344,8 +364,6 @@ public class ChatController implements ServerListener {
     /**
     * 2. View에서 발생한 동작을 서버에 요청으로 연결
     *     3) 채팅 기능
-    * - 
-
     */
     public void sendMessage(long roomId, String text) {
         ChatRequest data = new ChatRequest(roomId, text);
@@ -380,8 +398,6 @@ public class ChatController implements ServerListener {
 
     /**
     * 3. 화면 관리
-    * - 
-
     */
     public void setMainView(MainView view) {
     	this.mainView = view;
@@ -394,7 +410,5 @@ public class ChatController implements ServerListener {
             view.dispose(); //swing창 닫기
         }
     }
-    
-    //메소드 추가? openChatView(long roomId)
 
 }
