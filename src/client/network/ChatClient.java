@@ -7,8 +7,8 @@ import javax.swing.SwingUtilities;
 import client.controller.ChatController;
 import client.controller.CommandHandler;
 import client.model.ChatModel;
+import client.view.MainView;
 import common.Protocol;
-//import client.view.MainView; //아직 없음
 
 public class ChatClient {
 
@@ -26,8 +26,6 @@ public class ChatClient {
 				MainView mainView = new MainView(controller, model);
 				// 2. controller에 view 연결
 				controller.setMainView(mainView);
-
-				// 서버 수신 리스너 등록: connection.setListener(controller) 삭제 - controller에서 대
 				
 				try {
 					// 3. 서버 접속 (connect(HOST, PORT))

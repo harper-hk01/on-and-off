@@ -74,4 +74,17 @@ public class DBConnection {
             try { conn.close(); } catch (SQLException e) { e.printStackTrace(); }
         }
     }
+    
+    /// DB 연결 확인용 main 
+    public static void main(String[] args) {
+        try (Connection conn = getConnection()) {
+            System.out.println("DB 연결 성공! (" + conn.getCatalog() + ")");
+            System.out.println("MySQL 버전: " + conn.getMetaData().getDatabaseProductVersion());
+        } catch (SQLException e) {
+            System.out.println("DB 연결 실패: " + e.getMessage());
+            System.out.println("- MySQL이 켜져 있는지");
+            System.out.println("- db.properties의 비밀번호가 맞는지");
+            System.out.println("- db/schema.sql을 실행했는지 확인하세요.");
+        }
+    }
 }
