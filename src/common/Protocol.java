@@ -5,7 +5,7 @@ public final class Protocol {
   private Protocol() { }
 
   // 1. 기본 통신 설정
-  public static final String HOST = "10.240.149.3"; //나중에 서버 PC의 IP로 바꾸기
+  public static final String HOST = "localhost"; //나중에 서버 PC의 IP로 바꾸기
   public static final int PORT = 50023;
   public static final String CHARSET = "UTF-8";
 
