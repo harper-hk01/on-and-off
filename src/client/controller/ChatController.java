@@ -124,6 +124,7 @@ public class ChatController implements ServerListener {
         case JOIN_RESULT: //가입완료
         	JoinResult joinResult = (JoinResult) msg.getData();
         	if(joinResult.isSuccess()) {
+        		mainView.showMessage("회원가입이 완료되었습니다");
         		mainView.showLogin();//로그인 페이지 보여주기
         	}
         	else {
