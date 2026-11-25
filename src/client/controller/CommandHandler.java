@@ -47,6 +47,9 @@ public class CommandHandler {
     private void bringToFront(ChatView view) {
         view.setVisible(true);
         view.toFront();
+        view.setAlwaysOnTop(true);
+        view.setAlwaysOnTop(false);
+        
     }
 
     private void playSound() {
