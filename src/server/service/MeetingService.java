@@ -24,8 +24,8 @@ import server.session.SessionRegistry;
 
 public class MeetingService {
 
-	private static final long NUDGE_AFTER_MS = TimeUnit.MINUTES.toMillis(10);
-	private static final long CHECK_INTERVAL_MS = TimeUnit.MINUTES.toMillis(1);
+	private static final long NUDGE_AFTER_MS = TimeUnit.SECONDS.toMillis(10);
+	private static final long CHECK_INTERVAL_MS = TimeUnit.SECONDS.toMillis(1);
 
 	private final RoomDAO roomDAO;
 	private final UserDAO userDAO;
