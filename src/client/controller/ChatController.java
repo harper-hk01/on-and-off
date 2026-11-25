@@ -142,18 +142,6 @@ public class ChatController implements ServerListener {
             break;
 
         // ===== 친구 =====
-        case SEARCH_RESULT:
-        	SearchResult searchResult = (SearchResult) msg.getData();
-        	if(searchResult.isSuccess()) {
-        		UserDTO found = searchResult.getUser();
-        		//검색 결과 어디에 표현함?? 뷰에서 검색 버튼 자체가 없음!
-        	}
-        	else {
-        		mainView.showMessage(searchResult.getMessage());
-        	}
-        	
-            break;
-
         case FRIEND_ADD_RESULT: //내가 다른이를 친구 추가 성공했다
         	FriendAddResult friendAddResult = (FriendAddResult) msg.getData();
         	if (friendAddResult.isSuccess()) {
