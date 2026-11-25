@@ -91,12 +91,6 @@ public class CommandDispatcher {
 				break;
 			}
 			// FriendService
-			case SEARCH: {
-				SearchRequest req = (SearchRequest) msg.getData();
-				SearchResult result = friendService.search(me, req);
-				handler.send(Command.SEARCH_RESULT, result);
-				break;
-			}
 			case FRIEND_ADD: {
 				FriendAddRequest req = (FriendAddRequest) msg.getData();
 				FriendAddResult result = friendService.addFriend(me, req);
