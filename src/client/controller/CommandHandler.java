@@ -4,7 +4,7 @@ import java.awt.Toolkit;
 
 import client.view.ChatView;
 import common.Message;
-import dto.response.NudgeNoti;
+
 
 /**
  * 버즈(BUZZ_RECV), 발언 독려(NUDGE_NOTI)처럼 "창에 효과를 주는" 알림 처리 담당.
@@ -29,10 +29,9 @@ public class CommandHandler {
             break;
             
         case NUDGE_NOTI: { //업무모드에서 독려
-            NudgeNoti noti = (NudgeNoti) msg.getData();
             bringToFront(view);
             playSound();
-            showNudge(view, noti.getTargetId());
+            showNudge(view);
             break;
         }
 
@@ -57,7 +56,7 @@ public class CommandHandler {
     }
 
     // ChatView.showNudge = 문구 표시 + 창 흔들기
-    private void showNudge(ChatView view, String targetId) {
-        view.showNudge(targetId);
+    private void showNudge(ChatView view) {
+        view.showNudge();
     }
 }
