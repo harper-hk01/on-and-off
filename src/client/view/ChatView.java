@@ -94,6 +94,9 @@ public class ChatView extends JFrame implements ActionListener {
 		header.add(roomTitle, BorderLayout.NORTH);
 		header.add(noticePanel, BorderLayout.SOUTH);
 		noticePanel.add(noticeLabel, BorderLayout.CENTER);
+		noticeLabel.setHorizontalAlignment(JLabel.CENTER);
+		noticeLabel.setOpaque(true);
+		noticeLabel.setBackground(new java.awt.Color(255, 243, 205));
 
 		// 중앙 대화 내역 스크롤 팬으로, 공지는 1개 메세지만 선택 가능
 		JScrollPane chatScroll = new JScrollPane();
@@ -115,6 +118,9 @@ public class ChatView extends JFrame implements ActionListener {
 		// 업무방 전용 - 독려 문구, 회의, 공지 버튼 4개
 		modeArea.add(workPanel, BorderLayout.SOUTH);
 		workPanel.add(nudgeLabel, BorderLayout.NORTH);
+		nudgeLabel.setHorizontalAlignment(JLabel.CENTER);
+		nudgeLabel.setOpaque(true);
+		nudgeLabel.setBackground(new java.awt.Color(255, 100, 100));
 
 		JPanel workButtons = new JPanel(new GridLayout(2, 2, 4, 4));
 		workPanel.add(workButtons, BorderLayout.CENTER);
@@ -436,7 +442,7 @@ public class ChatView extends JFrame implements ActionListener {
 			return;
 		}
 
-		nudgeLabel.setText(targetId + " 님, 의견을 내주세요.");
+		nudgeLabel.setText("※ " + model.getMe().getNickname() + " 님, 의견을 내주세요. ※");
 		nudgeLabel.setVisible(true);
 
 		if (nudgeTimer == null) {
