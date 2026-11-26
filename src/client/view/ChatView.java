@@ -437,7 +437,7 @@ public class ChatView extends JFrame implements ActionListener {
 		}
 	}
 
-	public void showNudge(String targetId) {
+	public void showNudge() {
 		if (isDaily) {
 			return;
 		}
