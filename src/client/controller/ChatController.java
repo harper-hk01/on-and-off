@@ -383,11 +383,6 @@ public class ChatController implements ServerListener {
         mainView.showLogin();
     }
 
-    public void searchUser(String loginId) {
-        SearchRequest data = new SearchRequest(loginId);
-        connection.send(Command.SEARCH, data);
-    }
-
     public void addFriend(String loginId) {
         FriendAddRequest data = new FriendAddRequest(loginId);
         connection.send(Command.FRIEND_ADD, data);
