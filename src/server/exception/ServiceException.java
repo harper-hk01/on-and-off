@@ -1,4 +1,4 @@
-package server.service;
+package server.exception;
 
 /*	Service에서 "예상한 실패"를 알릴 때 던지는 예외.
  *  ex. 비밀번호 틀림, 아이디 형식 틀림, 이미 친구라서 친구 신청 불가 등

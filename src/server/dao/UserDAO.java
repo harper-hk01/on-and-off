@@ -7,6 +7,7 @@ import java.sql.SQLException;
 
 import dto.common.Status;
 import dto.common.UserDTO;
+import server.exception.DAOException;
 
 /**
  * users 테이블 SQL만 맡는 클래스.

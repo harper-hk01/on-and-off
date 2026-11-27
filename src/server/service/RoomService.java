@@ -23,6 +23,7 @@ import server.dao.FriendDAO;
 import server.dao.MessageDAO;
 import server.dao.RoomDAO;
 import server.dao.UserDAO;
+import server.exception.ServiceException;
 import server.session.SessionRegistry;
 
 // 초기 설계와 달라진 부분 : 1:1방 생성 시 친구 여부 검사하기 위해서 필드, 생성자에 FriendDAO 추가

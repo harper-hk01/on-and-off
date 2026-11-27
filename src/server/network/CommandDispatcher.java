@@ -17,7 +17,6 @@ import dto.request.RoomCreateRequest;
 import dto.request.RoomEnterRequest;
 import dto.request.RoomOpenRequest;
 import dto.request.RoomReadRequest;
-import dto.request.SearchRequest;
 import dto.request.StatusRequest;
 import dto.request.TypingRequest;
 import dto.response.ErrorDTO;
@@ -28,14 +27,13 @@ import dto.response.LoginResult;
 import dto.response.ProfileUpdateResult;
 import dto.response.RoomCreateResult;
 import dto.response.RoomInfo;
-import dto.response.SearchResult;
-import server.dao.DAOException;
+import server.exception.DAOException;
+import server.exception.ServiceException;
 import server.service.ChatService;
 import server.service.FriendService;
 import server.service.LoginInfo;
 import server.service.MeetingService;
 import server.service.RoomService;
-import server.service.ServiceException;
 import server.service.UserService;
 
 public class CommandDispatcher {
@@ -72,6 +70,7 @@ public class CommandDispatcher {
 				IdCheckRequest req = (IdCheckRequest) msg.getData(); // 꺼내기
 				IdCheckResult result = userService.checkId(req); // 처리
 				handler.send(Command.ID_CHECK_RESULT, result); // 응답
+				// handler.send(Command.ID_CHECK_RESULT, userService.checkId((IdCheckRequest) msg.getData()));
 				break;
 			}
 			case JOIN: {

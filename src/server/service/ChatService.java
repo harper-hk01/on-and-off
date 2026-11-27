@@ -15,6 +15,7 @@ import dto.response.BuzzRecv;
 import server.dao.MessageDAO;
 import server.dao.RoomDAO;
 import server.dao.UserDAO;
+import server.exception.ServiceException;
 import server.session.SessionRegistry;
 
 /**

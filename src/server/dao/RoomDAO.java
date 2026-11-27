@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dto.common.*;
+import server.exception.DAOException;
 
 /**
  * chat_rooms, room_members 테이블 SQL을 맡는 클래스.
