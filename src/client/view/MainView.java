@@ -101,6 +101,7 @@ public class MainView extends JFrame implements ActionListener {
 	// 업무방 생성에서 방이름/초대할 사람 아이디 입력값
 	private final JTextField groupName = new JTextField();
 	private final JTextField memberId = new JTextField();
+	private final JList<UserDTO> inviteFriendList = new JList<>();
 	// 추가한 아이디 members에 저장하고 memberlist에 표시
 	private final DefaultListModel<String> members = new DefaultListModel<>();
 	private final JList<String> memberList = new JList<>();
@@ -311,20 +312,56 @@ public class MainView extends JFrame implements ActionListener {
 		JPanel groupPage = new JPanel(new BorderLayout());
 		pages.add(groupPage, "group");
 
+		// 방 이름
 		JPanel groupForm = new JPanel(new GridLayout(0, 1, 4, 6));
 		groupPage.add(groupForm, BorderLayout.NORTH);
 		groupForm.add(new JLabel("방 이름"));
 		groupForm.add(groupName);
-		groupForm.add(new JLabel("멤버 아이디 입력 후 Enter"));
-		groupForm.add(memberId);
 
+		// 아이디 입력칸 | 추가 버튼
+		groupForm.add(new JLabel("친구 아이디를 입력하거나 아래 목록에서 선택하세요"));
+
+		JPanel memberRow = new JPanel(new BorderLayout());
+		groupForm.add(memberRow);
+		memberRow.add(memberId, BorderLayout.CENTER);
 		memberId.setActionCommand("addMember");
 		memberId.addActionListener(this);
 
-		JScrollPane memberScroll = new JScrollPane();
-		groupPage.add(memberScroll, BorderLayout.CENTER);
-		memberScroll.setViewportView(memberList);
+		JButton addButton = new JButton("추가");
+		memberRow.add(addButton, BorderLayout.EAST);
+		addButton.setActionCommand("addMember");
+		addButton.addActionListener(this);
 
+		// 흰 영역 위쪽: 추가된 아이디 목록
+		JPanel listsPanel = new JPanel(new BorderLayout(0, 6));
+		groupPage.add(listsPanel, BorderLayout.CENTER);
+
+		JPanel invitedPanel = new JPanel(new BorderLayout());
+		listsPanel.add(invitedPanel, BorderLayout.NORTH);
+		invitedPanel.add(new JLabel("추가된 아이디"), BorderLayout.NORTH);
+		memberList.setVisibleRowCount(3);
+		invitedPanel.add(new JScrollPane(memberList), BorderLayout.CENTER);
+
+		// 흰 영역 아래쪽: 기본 친구 탭과 같은 내용의 친구 목록
+		JPanel friendPanel = new JPanel(new BorderLayout());
+		listsPanel.add(friendPanel, BorderLayout.CENTER);
+		friendPanel.add(new JLabel("친구 목록"), BorderLayout.NORTH);
+		friendPanel.add(new JScrollPane(inviteFriendList), BorderLayout.CENTER);
+
+		// 친구를 선택하면 해당 친구의 아이디를 입력칸에 표시
+		inviteFriendList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		inviteFriendList.addListSelectionListener(e -> {
+			if (e.getValueIsAdjusting()) {
+				return;
+			}
+
+			UserDTO friend = inviteFriendList.getSelectedValue();
+			if (friend != null) {
+				memberId.setText(friend.getLoginId());
+			}
+		});
+
+		// 하단 버튼
 		JPanel groupButtons = new JPanel();
 		groupPage.add(groupButtons, BorderLayout.SOUTH);
 
@@ -372,6 +409,7 @@ public class MainView extends JFrame implements ActionListener {
 
 		// 친구 목록은 챗 모델에 직접 연결
 		friends.setModel(model.getFriends());
+		inviteFriendList.setModel(model.getFriends());
 
 		// 화면 목록에 연결
 		dailyList.setModel(dailyRooms);
@@ -383,6 +421,7 @@ public class MainView extends JFrame implements ActionListener {
 		friends.setCellRenderer(renderer);
 		dailyList.setCellRenderer(renderer);
 		workList.setCellRenderer(renderer);
+		inviteFriendList.setCellRenderer(renderer);
 
 		// 클릭 숫자 설정, 친구는 더블클릭, 방은 1번 클릭
 		installListClick(friends, 2);
@@ -501,16 +540,18 @@ public class MainView extends JFrame implements ActionListener {
 			clearFields(List.of(chatFriendId));
 			break;
 
-		// 새 업무방 만들기 할때 초기화
+		// 업무방 만들기 화면 열기
 		case "showGroup":
 			members.clear();
+			inviteFriendList.clearSelection();
 			clearFields(List.of(memberId, groupName));
 			cards.show(pages, "group");
 			break;
 
-		// 초대 목록 멤버 추가
+		// 입력한 아이디 또는 친구 목록에서 선택한 아이디 추가
 		case "addMember":
 			addMember();
+			inviteFriendList.clearSelection();
 			clearFields(List.of(memberId));
 			break;
 
