@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 import dto.common.MessageDTO;
+import server.exception.DAOException;
 
 /**
  * messages 테이블 SQL만 맡는 클래스.

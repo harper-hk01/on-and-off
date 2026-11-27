@@ -20,6 +20,7 @@ import dto.response.MeetingNoti;
 import dto.response.NudgeNoti;
 import server.dao.RoomDAO;
 import server.dao.UserDAO;
+import server.exception.ServiceException;
 import server.session.SessionRegistry;
 
 public class MeetingService {

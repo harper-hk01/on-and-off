@@ -11,9 +11,10 @@ import dto.request.LoginRequest;
 import dto.response.IdCheckResult;
 import dto.response.JoinResult;
 import dto.response.StatusNoti;
-import server.dao.DAOException;
 import server.dao.FriendDAO;
 import server.dao.UserDAO;
+import server.exception.DAOException;
+import server.exception.ServiceException;
 import server.session.ClientSession;
 import server.session.SessionRegistry;
 

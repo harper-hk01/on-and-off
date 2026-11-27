@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dto.common.*;
+import server.exception.DAOException;
 
 /**
  * friends 테이블 SQL만 맡는 클래스.

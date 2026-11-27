@@ -16,9 +16,10 @@ import dto.response.FriendAddResult;
 import dto.response.ProfileUpdateResult;
 import dto.response.SearchResult;
 import dto.response.StatusNoti;
-import server.dao.DAOException;
 import server.dao.FriendDAO;
 import server.dao.UserDAO;
+import server.exception.DAOException;
+import server.exception.ServiceException;
 import server.session.SessionRegistry;
 
 /**
