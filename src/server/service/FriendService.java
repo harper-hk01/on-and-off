@@ -25,7 +25,7 @@ import server.session.SessionRegistry;
  * 친구·상태·프로필 기능의 판단을 맡는 클래스.
  *
  * - 요청한 사람(me)은 필드가 아니라 매개변수로 받는다. 서버에 FriendService가 하나뿐이고 모든 사용자가 같이 쓰기 때문.
- * - *_RESULT 응답이 있는 명령(SEARCH, FRIEND_ADD, PROFILE_UPDATE)은 실패하면 success=false 결과를 돌려준다.
+ * - *_RESULT 응답이 있는 명령(FRIEND_ADD, PROFILE_UPDATE)은 실패하면 success=false 결과를 돌려준다.
  *   응답 상자가 없는 명령(STATUS)은 ServiceException을 던진다.
  * - DB 오류(DAOException)는 잡지 않고 CommandDispatcher로 올려 보낸다.
  *   단, 친구 추가의 중복 저장(1062)만 여기서 잡아 알아볼 수 있는 문구로 바꾼다 (팀 결정).
@@ -43,20 +43,6 @@ public class FriendService {
 		this.friendDAO = friendDAO;
 		this.userDAO = userDAO;
 		this.registry = registry;
-	}
-
-	// 아이디로 회원 찾기 (SEARCH)
-	public SearchResult search(long me, SearchRequest req) {
-		String loginId = trimToNull(req.getLoginId());
-		if (loginId == null) {
-			return new SearchResult(false, "찾을 아이디를 입력해 주세요.", null);
-		}
-
-		UserDTO user = userDAO.findByLoginId(loginId);
-		if (user == null) {
-			return new SearchResult(false, "사용자를 찾을 수 없습니다.", null);
-		}
-		return new SearchResult(true, null, user);
 	}
 
 	// 친구 추가 (FRIEND_ADD)
