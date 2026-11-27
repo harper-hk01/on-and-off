@@ -388,7 +388,7 @@ public class ChatView extends JFrame implements ActionListener {
 	public void appendMessage(MessageDTO msg) {
 		lines.addElement(messageLine(msg));
 		if (isDaily && model.getMe() != null && !model.getMe().getLoginId().equals(msg.getSenderId())) {
-			showTyping("");
+			showTyping(""); // 상대 메시지가 도착하면 입력 중 표시를 지운다.
 		}
 		scrollToLast();
 	}

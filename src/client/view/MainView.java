@@ -107,18 +107,24 @@ public class MainView extends JFrame implements ActionListener {
 
 	// 기본 화면, 버튼 등 배치
 	private void initializeUI() {
-		// 기본 설정
 		setTitle("온앤오프");
 		setSize(390, 570);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		// 창 내용에 pages 사용
 		setContentPane(pages);
 
-		// 1. 로그인 페이지
+		addLoginPage();
+		addJoinPage();
+		addNicknamePage();
+		addHomePage();
+		addProfilePage();
+		addGroupPage();
+	}
+
+	// 1. 로그인 화면
+	private void addLoginPage() {
 		JPanel loginPage = new JPanel(new BorderLayout());
 		pages.add(loginPage, "login");
 
-		// 입력 폼
 		JPanel loginForm = new JPanel(new GridLayout(0, 1, 4, 6));
 		loginPage.add(loginForm, BorderLayout.NORTH);
 		loginForm.add(new JLabel("온앤오프"));
@@ -127,24 +133,22 @@ public class MainView extends JFrame implements ActionListener {
 		loginForm.add(new JLabel("비밀번호"));
 		loginForm.add(loginPassword);
 
-		// 로그인 버튼 등록
 		JButton loginButton = new JButton("로그인");
 		loginForm.add(loginButton);
-
-		// 로그인 버튼 클릭 or 비밀번호 입력 후 enter -> login 동작으로
-		// 액션은 actionPerformed()에서 실행
 		loginButton.setActionCommand("login");
 		loginButton.addActionListener(this);
+
 		loginPassword.setActionCommand("login");
 		loginPassword.addActionListener(this);
 
-		// 회원가입 페이지로 이동
 		JButton joinLink = new JButton("회원가입");
 		loginForm.add(joinLink);
 		joinLink.setActionCommand("showJoin");
 		joinLink.addActionListener(this);
+	}
 
-		// 2. 회원가입 페이지
+	// 2. 회원가입 화면
+	private void addJoinPage() {
 		JPanel joinPage = new JPanel(new BorderLayout());
 		pages.add(joinPage, "join");
 
@@ -153,34 +157,31 @@ public class MainView extends JFrame implements ActionListener {
 		joinForm.add(new JLabel("회원가입"));
 		joinForm.add(new JLabel("아이디"));
 
-		// 아이디 입력칸/중복 확인 버튼을 같은 줄에 배치
 		JPanel checkRow = new JPanel(new BorderLayout());
 		joinForm.add(checkRow);
 		checkRow.add(joinId, BorderLayout.CENTER);
 
-		// 중복 확인 버튼 등록 + 동작
 		JButton checkButton = new JButton("중복확인");
 		checkRow.add(checkButton, BorderLayout.EAST);
 		checkButton.setActionCommand("checkId");
 		checkButton.addActionListener(this);
 
-		// 비밀번호 입력칸
 		joinForm.add(new JLabel("비밀번호"));
 		joinForm.add(joinPassword);
 
-		// 아이디/비밀번호 입력 여부 확인하고 닉네임 설정 단계로 이동
 		JButton nextButton = new JButton("닉네임 설정으로");
 		joinForm.add(nextButton);
 		nextButton.setActionCommand("showNickname");
 		nextButton.addActionListener(this);
 
-		// 로그인 페이지로 돌아가기
 		JButton backToLogin = new JButton("로그인으로");
 		joinForm.add(backToLogin);
 		backToLogin.setActionCommand("showLogin");
 		backToLogin.addActionListener(this);
+	}
 
-		// 3. 닉네임 설정 페이지
+	// 3. 닉네임 설정 화면
+	private void addNicknamePage() {
 		JPanel nicknamePage = new JPanel(new BorderLayout());
 		pages.add(nicknamePage, "nickname");
 
@@ -189,86 +190,58 @@ public class MainView extends JFrame implements ActionListener {
 		nicknameForm.add(new JLabel("사용하실 닉네임을 입력해 주세요."));
 		nicknameForm.add(nickname);
 
-		// 가입완료 버튼 or 입력 후 enter로 회원가입
 		JButton joinButton = new JButton("가입 완료");
 		nicknameForm.add(joinButton);
 		joinButton.setActionCommand("join");
 		joinButton.addActionListener(this);
+
 		nickname.setActionCommand("join");
 		nickname.addActionListener(this);
 
-		// 돌아가기
 		JButton backToJoin = new JButton("이전");
 		nicknameForm.add(backToJoin);
 		backToJoin.setActionCommand("showJoin");
 		backToJoin.addActionListener(this);
+	}
 
-		// 4. 메인 화면
+	// 4. 메인 화면
+	private void addHomePage() {
 		JPanel homePage = new JPanel(new BorderLayout());
 		pages.add(homePage, "main");
 		homePage.add(tabs, BorderLayout.CENTER);
 
-		// 1) 친구 탭
+		// 친구 탭
 		JPanel friendTab = new JPanel(new BorderLayout());
 		tabs.addTab("친구", friendTab);
 
-		// 친구 목록 상단에 내 프로필 + 상태메시지
 		JPanel friendHeader = new JPanel(new GridLayout(0, 1, 2, 4));
 		friendTab.add(friendHeader, BorderLayout.NORTH);
 		friendHeader.add(myInfo);
 		friendHeader.add(myStatus);
 
-		// 프로필 수정 버튼 누르면 수정 페이지로
 		JButton profileButton = new JButton("프로필 수정");
 		friendHeader.add(profileButton);
 		profileButton.setActionCommand("editProfile");
 		profileButton.addActionListener(this);
 
-		// 친구 아이디 입력 + 버튼
-		JPanel friendRow = new JPanel(new BorderLayout());
-		friendHeader.add(friendRow);
-		friendId.setToolTipText("추가할 친구 아이디");
-		friendRow.add(friendId, BorderLayout.CENTER);
-
-		JButton addFriendButton = new JButton("친구 추가");
-		friendRow.add(addFriendButton, BorderLayout.EAST);
-		addFriendButton.setActionCommand("addFriend");
-		addFriendButton.addActionListener(this);
-		friendId.setActionCommand("addFriend");
-		friendId.addActionListener(this);
-
-		// 친구 수
+		friendHeader.add(createIdActionRow(friendId, "추가할 친구 아이디", "친구 추가", "addFriend"));
 		friendHeader.add(friendCount);
 
-		// 스크롤에 친구 목록 표시
 		JScrollPane friendScroll = new JScrollPane();
 		friendTab.add(friendScroll, BorderLayout.CENTER);
 		friendScroll.setViewportView(friends);
 
-		// 2) 메인 화면 - 일상 탭
+		// 일상 탭
 		JPanel dailyTab = new JPanel(new BorderLayout());
 		tabs.addTab("일상", dailyTab);
 
-		// 대화할 친구 아이디 일상 탭 상단에서 입력
-		JPanel directRow = new JPanel(new BorderLayout());
-		dailyTab.add(directRow, BorderLayout.NORTH);
-		chatFriendId.setToolTipText("대화할 친구 아이디");
-		directRow.add(chatFriendId, BorderLayout.CENTER);
+		dailyTab.add(createIdActionRow(chatFriendId, "대화할 친구 아이디", "대화하기", "openDirect"), BorderLayout.NORTH);
 
-		// 입력한 아이디로 대화방 열기 요청
-		JButton directButton = new JButton("대화하기");
-		directRow.add(directButton, BorderLayout.EAST);
-		directButton.setActionCommand("openDirect");
-		directButton.addActionListener(this);
-		chatFriendId.setActionCommand("openDirect");
-		chatFriendId.addActionListener(this);
-
-		// 방 목록 스크롤 팬으로 표시
 		JScrollPane dailyScroll = new JScrollPane();
 		dailyTab.add(dailyScroll, BorderLayout.CENTER);
 		dailyScroll.setViewportView(dailyList);
 
-		// 3) 업무 탭
+		// 업무 탭
 		JPanel workTab = new JPanel(new BorderLayout());
 		tabs.addTab("업무", workTab);
 
@@ -276,13 +249,12 @@ public class MainView extends JFrame implements ActionListener {
 		workTab.add(workScroll, BorderLayout.CENTER);
 		workScroll.setViewportView(workList);
 
-		// 업무방 만들기 페이지로 이동
 		JButton newRoomButton = new JButton("+ 업무방 만들기");
 		workTab.add(newRoomButton, BorderLayout.SOUTH);
 		newRoomButton.setActionCommand("showGroup");
 		newRoomButton.addActionListener(this);
 
-		// 4) 메뉴 바 - homepage에 배치해 세 탭에서 함께 사용
+		// 세 탭에서 함께 사용하는 메뉴 바
 		JMenuBar menuBar = new JMenuBar();
 		homePage.add(menuBar, BorderLayout.NORTH);
 
@@ -297,11 +269,12 @@ public class MainView extends JFrame implements ActionListener {
 
 		JMenuItem logout_Item = new JMenuItem("로그아웃");
 		menu_logout.add(logout_Item);
-		logout_Item.setText("로그아웃");
 		logout_Item.setActionCommand("logout");
 		logout_Item.addActionListener(this);
+	}
 
-		// 5. 프로필 수정
+	// 5. 프로필 수정 화면
+	private void addProfilePage() {
 		JPanel profilePage = new JPanel(new BorderLayout());
 		pages.add(profilePage, "profile");
 
@@ -315,7 +288,6 @@ public class MainView extends JFrame implements ActionListener {
 		profileForm.add(profileScroll);
 		profileScroll.setViewportView(profileText);
 
-		// 동시선택 방지로 Group화
 		JPanel statusRow = new JPanel();
 		profileForm.add(statusRow);
 		statusRow.add(online);
@@ -323,19 +295,19 @@ public class MainView extends JFrame implements ActionListener {
 		statusGroup.add(online);
 		statusGroup.add(away);
 
-		// 수정한 프로필 컨트롤러에 전달
 		JButton saveButton = new JButton("수정하기");
 		profileForm.add(saveButton);
 		saveButton.setActionCommand("saveProfile");
 		saveButton.addActionListener(this);
 
-		// 수정요청 없이 돌아가기
 		JButton profileBack = new JButton("돌아가기");
 		profileForm.add(profileBack);
 		profileBack.setActionCommand("showMain");
 		profileBack.addActionListener(this);
+	}
 
-		// 6. 업무방 만들기 페이지
+	// 6. 업무방 생성 화면
+	private void addGroupPage() {
 		JPanel groupPage = new JPanel(new BorderLayout());
 		pages.add(groupPage, "group");
 
@@ -345,6 +317,7 @@ public class MainView extends JFrame implements ActionListener {
 		groupForm.add(groupName);
 		groupForm.add(new JLabel("멤버 아이디 입력 후 Enter"));
 		groupForm.add(memberId);
+
 		memberId.setActionCommand("addMember");
 		memberId.addActionListener(this);
 
@@ -369,6 +342,23 @@ public class MainView extends JFrame implements ActionListener {
 		groupButtons.add(groupBack);
 		groupBack.setActionCommand("showMain");
 		groupBack.addActionListener(this);
+	}
+
+	// 친구 추가와 1:1 대화 시작에 공통으로 쓰는 아이디 입력 행(배치와 Enter,클릭 연결이 동일해 공통 모듈화)
+	private JPanel createIdActionRow(JTextField field, String hint, String buttonText, String command) {
+		JPanel row = new JPanel(new BorderLayout());
+
+		field.setToolTipText(hint);
+		field.setActionCommand(command);
+		field.addActionListener(this);
+		row.add(field, BorderLayout.CENTER);
+
+		JButton button = new JButton(buttonText);
+		button.setActionCommand(command);
+		button.addActionListener(this);
+		row.add(button, BorderLayout.EAST);
+
+		return row;
 	}
 
 	// 생성자. 인자로 컨트롤러 / 모델을 받음
