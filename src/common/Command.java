@@ -5,16 +5,17 @@ import java.util.List;
 
 import com.google.gson.reflect.TypeToken;
 
-import common.dto_old.*;
-import dto.common.ChatRoomDTO;
-import dto.common.MessageDTO;
-import dto.common.UserDTO;
+import dto.common.*;
+import dto.request.*;
+import dto.response.*;
 
 /**
  * 서버와 클라이언트가 주고받는 모든 명령어(type).
  * 괄호 안 = 그 명령어의 data를 담는 DTO 종류. data가 없으면 null.
  * Message.parse()가 이 정보를 보고 data를 알맞은 DTO로 바꾼다.
  */
+
+// 규칙 추가: 답장은 요청이름_RESULT로 짓는다
 public enum Command {
 
     // ===== 4.1 회원 =====
@@ -70,7 +71,7 @@ public enum Command {
     NUDGE_NOTI(NudgeNoti.class),                    // S→C
 
     // ===== 4.8 공통 =====
-    ERROR(ErrorDTO.class);                          // S→C
+    ERROR(ErrorDTO.class);                          // S→C Command.ERROR.dataType = ErrorDTO.class; // 개념상 이렇다는 뜻
 
     // ---------------------------------------------
 
