@@ -72,7 +72,7 @@ public class RoomService {
 	}
 
 	// 그룹 채팅방 생성 (ROOM_CREATE)
-	public RoomCreateResult createRoom(long me, RoomCreateRequest req) {
+	public RoomCreateResult createGroupRoom(long me, RoomCreateRequest req) {
 		String roomName = req.getRoomName();
 
 		if (roomName == null || roomName.isBlank()) {
