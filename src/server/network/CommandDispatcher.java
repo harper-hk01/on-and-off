@@ -128,7 +128,7 @@ public class CommandDispatcher {
 			}
 			case ROOM_CREATE: {
 				RoomCreateRequest req = (RoomCreateRequest) msg.getData();
-				RoomCreateResult result = roomService.createRoom(me, req);
+				RoomCreateResult result = roomService.createGroupRoom(me, req);
 				handler.send(Command.ROOM_CREATE_RESULT, result);
 				break;
 			}
