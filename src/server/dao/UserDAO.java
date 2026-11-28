@@ -9,21 +9,11 @@ import dto.common.Status;
 import dto.common.UserDTO;
 import server.exception.DAOException;
 
-/**
- * users 테이블 SQL만 맡는 클래스.
- *
- * - 메서드 하나 = SQL 하나.
- * - 판단(아이디 형식 검사, 비밀번호 비교 등)은 UserService가 하고, DAO는 DB에 넣고 꺼내기만 한다.
- * - 비밀번호는 UserDTO에 넣지 않는다 (남에게 보내면 안 되므로). 비밀번호는 findPassword로 따로 꺼낸다.
- * - SQL의 ?는 빈칸이다. PreparedStatement로 값을 채워 넣어서 SQL 인젝션을 막는다.
- * - try ( ... ) 괄호 안에서 만든 Connection·PreparedStatement·ResultSet은
- *   블록이 끝나면 자동으로 닫힌다 (try-with-resources).
- */
+///users 테이블 SQL만 맡는 클래스.
+
 public class UserDAO {
 
-    /**
-     * ID_CHECK: 같은 아이디가 몇 개 있는지 센다. 0이면 사용 가능.
-     */
+    ///ID_CHECK: 같은 아이디가 몇 개 있는지 센다. 0이면 사용 가능.
     public int countByLoginId(String loginId) {
         String sql = "SELECT COUNT(*) FROM users WHERE login_id = ?";
         try (Connection conn = DBConnection.getConnection();
@@ -56,27 +46,7 @@ public class UserDAO {
         }
     }
 
-    /**
-     * SEARCH / LOGIN 성공 후 내 정보: 아이디로 회원 한 명을 꺼낸다.
-     * 없으면 null.
-     */
-    public UserDTO findByLoginId(String loginId) {
-        String sql = "SELECT login_id, nickname, status_message, status FROM users WHERE login_id = ?";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, loginId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return toUserDTO(rs);
-                }
-                return null;
-            }
-        } catch (SQLException e) {
-            throw new DAOException("DB 오류: UserDAO.findByLoginId", e);
-        }
-    }
-
-    /** 회원 번호(user_id)로 회원 한 명을 꺼낸다. 없으면 null. */
+    /// 회원 번호(user_id)로 회원 한 명을 꺼낸다. 없으면 null.
     public UserDTO findById(long userId) {
         String sql = "SELECT login_id, nickname, status_message, status FROM users WHERE user_id = ?";
         try (Connection conn = DBConnection.getConnection();
