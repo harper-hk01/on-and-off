@@ -65,7 +65,7 @@ public class FriendDAO {
                 conn.rollback();// 하나라도 실패 → 둘 다 취소
                 throw e; //    바깥 catch에서 DAOException으로 감싸서 던진다
             } finally {
-                conn.setAutoCommit(true);// 원래대로 돌려 두기
+                conn.setAutoCommit(true); // 원래대로 돌려 두기
             }
         } catch (SQLException e) {
             throw new DAOException("DB 오류: FriendDAO.insertBoth", e);

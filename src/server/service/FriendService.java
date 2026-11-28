@@ -90,11 +90,6 @@ public class FriendService {
 		return friendDAO.findFriends(me);
 	}
 
-	// 내 친구들의 로그인 아이디 목록. 로그인·로그아웃 때 UserService가 STATUS_NOTI를 보낼 대상으로 쓴다.
-	public List<String> getFriendLoginIds(long me) {
-		return friendDAO.findFriendLoginIds(me);
-	}
-
 	// 내 상태 바꾸기 (STATUS). 바뀐 상태를 친구들에게 알린다.
 	public void changeStatus(long me, StatusRequest req) {
 		Status status = req.getStatus();
