@@ -19,7 +19,7 @@ import java.sql.SQLException;
  */
 public class DAOException extends RuntimeException {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;  //경고 방지
 
     /** MySQL 오류 번호: 같은 값이 이미 있음 (UNIQUE·PRIMARY KEY 중복) */
     public static final int DUPLICATE_KEY = 1062;
