@@ -76,9 +76,6 @@ public class ChatController implements ServerListener {
         this.connection = connection;
         this.model = model;
         this.commandHandler = commandHandler;
-        
-        //ServerConnection에 ChatController를 리스너로 등록
-        connection.setListener(this);
     }
     
     /**
