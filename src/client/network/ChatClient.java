@@ -28,6 +28,7 @@ public class ChatClient {
 				controller.setMainView(mainView);
 				connection.setListener(controller);
 				
+				
 				try {
 					// 3. 서버 접속 (connect(HOST, PORT))
 					connection.connect(Protocol.HOST, Protocol.PORT);
