@@ -59,21 +59,6 @@ public class DBConnection {
         return DriverManager.getConnection(url, user, password);
     }
     
-    public static void close(Connection conn, PreparedStatement ps, ResultSet rs) {
-        if (rs != null) {
-            try { rs.close(); } catch (SQLException e) { e.printStackTrace(); }
-        }
-        close(conn, ps);
-    }
-
-    public static void close(Connection conn, PreparedStatement ps) {
-        if (ps != null) {
-            try { ps.close(); } catch (SQLException e) { e.printStackTrace(); }
-        }
-        if (conn != null) {
-            try { conn.close(); } catch (SQLException e) { e.printStackTrace(); }
-        }
-    }
     
     /// DB 연결 확인용 main 
     public static void main(String[] args) {
