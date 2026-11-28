@@ -77,8 +77,6 @@ public class ChatController implements ServerListener {
         this.model = model;
         this.commandHandler = commandHandler;
         
-        //ServerConnection에 ChatController를 리스너로 등록
-        connection.setListener(this);
     }
     
     /**
@@ -381,11 +379,6 @@ public class ChatController implements ServerListener {
         chatViews.clear();
         model.clear();
         mainView.showLogin();
-    }
-
-    public void searchUser(String loginId) {
-        SearchRequest data = new SearchRequest(loginId);
-        connection.send(Command.SEARCH, data);
     }
 
     public void addFriend(String loginId) {

@@ -24,8 +24,10 @@ public class ChatClient {
 				CommandHandler commandHandler = new CommandHandler();
 				ChatController controller = new ChatController(connection, model, commandHandler);
 				MainView mainView = new MainView(controller, model);
-				// 2. controller에 view 연결
+				// 2. controller에 view 연결, listener 생성
 				controller.setMainView(mainView);
+				connection.setListener(controller);
+				
 				
 				try {
 					// 3. 서버 접속 (connect(HOST, PORT))
